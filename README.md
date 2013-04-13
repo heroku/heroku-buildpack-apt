@@ -24,7 +24,6 @@ Include a list of apt package names to be installed in a file named `Aptfile`
 #### Gemfile
 
     source "https://rubygems.org"
-    
     gem "pg"
     
 ### Compile with [Anvil](https://github.com/ddollar/anvil-cli)
