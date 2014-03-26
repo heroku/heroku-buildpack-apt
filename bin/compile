@@ -68,3 +68,11 @@ export LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib:$LIBRARY_PATH"
 export INCLUDE_PATH="$BUILD_DIR/.apt/usr/include:$INCLUDE_PATH"
 export CPATH="$INCLUDE_PATH"
 export CPPPATH="$INCLUDE_PATH"
+
+# Export LIBRARY_PATH via ENV_DIR
+if [ -x $3/LIBRARY_PATH ]; then
+  LPATH=$(cat $3/LIBRARY_PATH)
+else
+  LPATH=""
+fi
+echo -n "$BUILD_DIR/.apt/usr/lib:$LPATH" > $3/LIBRARY_PATH
