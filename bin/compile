@@ -76,3 +76,4 @@ else
   LPATH=""
 fi
 echo -n "$BUILD_DIR/.apt/usr/lib:$LPATH" > $3/LIBRARY_PATH
+echo -n "--with-icu-dir=\"$BUILD_DIR/.apt/usr\"" > $3/BUNDLE_BUILD__CHARLOCK_HOLMES
