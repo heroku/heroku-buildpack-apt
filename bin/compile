@@ -7,9 +7,24 @@ set -e
 # debug
 # set -x
 
+export_env_dir() {
+  env_dir=$1
+  whitelist_regex=${2:-''}
+  blacklist_regex=${3:-'^(BUILD_DIR|CACHE_DIR|ENV_DIR|LP_DIR)$'}
+  if [ -d "$env_dir" ]; then
+    for e in $(ls $env_dir); do
+      echo "$e" | grep -E "$whitelist_regex" | grep -qvE "$blacklist_regex" &&
+      export "$e=$(cat $env_dir/$e)"
+      :
+    done
+  fi
+}
+export_env_dir $3
+
 # parse and derive params
 BUILD_DIR=$1
 CACHE_DIR=$2
+ENV_DIR=$3
 LP_DIR=`cd $(dirname $0); cd ..; pwd`
 
 function error() {
@@ -69,11 +84,18 @@ export INCLUDE_PATH="$BUILD_DIR/.apt/usr/include:$INCLUDE_PATH"
 export CPATH="$INCLUDE_PATH"
 export CPPPATH="$INCLUDE_PATH"
 
-# Export LIBRARY_PATH via ENV_DIR
-if [ -x $3/LIBRARY_PATH ]; then
-  LPATH=$(cat $3/LIBRARY_PATH)
-else
-  LPATH=""
-fi
-echo -n "$BUILD_DIR/.apt/usr/lib:$LPATH" > $3/LIBRARY_PATH
-echo -n "--with-icu-dir=\"$BUILD_DIR/.apt/usr\"" > $3/BUNDLE_BUILD__CHARLOCK_HOLMES
+function set_env_var() {
+  ENV_VAR_NAME=$1
+  ENV_VAR_VALUE=$2
+  echo -n "$ENV_VAR_VALUE" > $ENV_DIR/$ENV_VAR_NAME
+  echo "$ENV_VAR_NAME = $ENV_VAR_VALUE" | indent
+}
+
+topic "Exporting environmental variables"
+set_env_var "PATH" "$PATH"
+set_env_var "LD_LIBRARY_PATH" "$LD_LIBRARY_PATH"
+set_env_var "LIBRARY_PATH" "$LIBRARY_PATH"
+set_env_var "INCLUDE_PATH" "$INCLUDE_PATH"
+set_env_var "CPATH" "$CPATH"
+set_env_var "CPPPATH" "$CPPPATH"
+set_env_var "BUNDLE_BUILD__CHARLOCK_HOLMES" "--with-icu-dir=\"$BUILD_DIR/.apt/usr\""
