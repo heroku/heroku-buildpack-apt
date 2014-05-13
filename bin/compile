@@ -42,7 +42,7 @@ apt-get $APT_OPTIONS update | indent
 
 for PACKAGE in $(cat $BUILD_DIR/Aptfile); do
   topic "Fetching .debs for $PACKAGE"
-  apt-get $APT_OPTIONS -y -d install $PACKAGE | indent
+  apt-get $APT_OPTIONS -y --force-yes -d install $PACKAGE | indent
 done
 
 mkdir -p $BUILD_DIR/.apt
