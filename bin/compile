@@ -42,7 +42,7 @@ apt-get $APT_OPTIONS update | indent
 
 for PACKAGE in $(cat $BUILD_DIR/Aptfile); do
   topic "Fetching .debs for $PACKAGE"
-  apt-get $APT_OPTIONS -y --force-yes -d install $PACKAGE | indent
+  apt-get $APT_OPTIONS -y --force-yes -d install --reinstall $PACKAGE | indent
 done
 
 mkdir -p $BUILD_DIR/.apt
@@ -61,6 +61,7 @@ export LIBRARY_PATH="\$HOME/.apt/usr/lib:\$LIBRARY_PATH"
 export INCLUDE_PATH="\$HOME/.apt/usr/include:\$INCLUDE_PATH"
 export CPATH="\$INCLUDE_PATH"
 export CPPPATH="\$INCLUDE_PATH"
+export PKG_CONFIG_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/i386-linux-gnu/pkgconfig:\$PKG_CONFIG_PATH"
 EOF
 
 export PATH="$BUILD_DIR/.apt/usr/bin:$PATH"
@@ -69,3 +70,4 @@ export LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib:$LIBRARY_PATH"
 export INCLUDE_PATH="$BUILD_DIR/.apt/usr/include:$INCLUDE_PATH"
 export CPATH="$INCLUDE_PATH"
 export CPPPATH="$INCLUDE_PATH"
+export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu/pkgconfig:$PKG_CONFIG_PATH"
