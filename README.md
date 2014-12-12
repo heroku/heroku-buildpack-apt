@@ -17,9 +17,8 @@ Include a list of apt package names to be installed in a file named `Aptfile`
 
 #### Aptfile
 
-
     libpq-dev
-    
+    http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-precise-amd64.deb
 
 #### Gemfile
 
