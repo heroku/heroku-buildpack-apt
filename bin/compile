@@ -85,9 +85,3 @@ export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPP
 
 topic "Rewrite package-config files"
 find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$BUILD_DIR"'/.apt\1!g'
-## DEBUG
-echo "echo ***** HELLO WORLD" >> "$LP_DIR/export"
-cat $LP_DIR/export
-find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs echo
-find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs -n 1 cat
-## END DEBUG
