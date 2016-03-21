@@ -85,7 +85,7 @@ export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUIL
 export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)='  > "$LP_DIR/export"
 
 topic "Rewrite package-config files"
-find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$APP_DIR"'/.apt\1!g'
+find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix=$BUILD_DIR/.apt\1!g'
 ## DEBUG
 find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs echo
 find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs -n 1 cat
