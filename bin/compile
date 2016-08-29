@@ -29,6 +29,9 @@ function indent() {
   esac
 }
 
+# Packages to be installed via apt-get
+declare -a packages=("libfile-basedir-perl" "libfile-mimeinfo-perl")
+
 APT_CACHE_DIR="$CACHE_DIR/apt/cache"
 APT_STATE_DIR="$CACHE_DIR/apt/state"
 
@@ -40,7 +43,7 @@ APT_OPTIONS="-o debug::nolocking=true -o dir::cache=$APT_CACHE_DIR -o dir::state
 topic "Updating apt caches"
 apt-get $APT_OPTIONS update | indent
 
-for PACKAGE in $(cat $BUILD_DIR/Aptfile); do
+for PACKAGE in "${packages[@]}" do
   if [[ $PACKAGE == *deb ]]; then
     PACKAGE_NAME=$(basename $PACKAGE .deb)
     PACKAGE_FILE=$APT_CACHE_DIR/archives/$PACKAGE_NAME.deb
@@ -82,3 +85,6 @@ export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUIL
 
 #give environment to later buildpacks
 export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)='  > "$LP_DIR/export"
+
+# Add apt-get Perl packages' path to Perl @INC
+export PERL5LIB=/app/.apt/usr/share/perl5
