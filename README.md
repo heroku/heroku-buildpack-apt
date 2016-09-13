@@ -10,10 +10,9 @@ Include a list of apt package names to be installed in a file named `Aptfile`
 
 ## Example
 
-#### .buildpacks
+Add the buildpack to your list of buildpacks:
 
-    https://github.com/ddollar/heroku-buildpack-apt
-    https://github.com/heroku/heroku-buildpack-ruby
+    heroku buildpacks:add https://github.com/ddollar/heroku-buildpack-apt
 
 #### Aptfile
 
