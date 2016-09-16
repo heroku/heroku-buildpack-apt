@@ -1,4 +1,4 @@
-# heroku-buildpack-apt
+# heroku-buildpack-apt [![Build Status](https://travis-ci.org/heroku/heroku-buildpack-apt.svg?branch=master)](https://travis-ci.org/heroku/heroku-buildpack-apt)
 
 Add support for apt-based dependencies during both compile and runtime.
 
