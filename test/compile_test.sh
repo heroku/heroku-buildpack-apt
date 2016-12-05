@@ -6,6 +6,7 @@ testCompile() {
   cat > ${BUILD_DIR}/Aptfile <<EOF
 s3cmd
 wget
+https://packagecloud.io/heroku/open/packages/ubuntu/trusty/json2envdir_2.1.1_amd64.deb/download
 EOF
 
   compile
@@ -16,4 +17,6 @@ EOF
   assertCaptured "Installing s3cmd_"
   assertCaptured "Fetching .debs for wget"
   assertCaptured "Installing wget_"
+  assertCaptured "Fetching https://packagecloud.io/heroku/open/packages/ubuntu/trusty/json2envdir_2.1.1_amd64.deb/download"
+  assertCaptured "Installing json2envdir_2.1.1"
 }
