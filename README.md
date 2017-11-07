@@ -20,8 +20,11 @@ heroku buildpacks:add --index 1 https://github.com/heroku/heroku-buildpack-apt
 
 #### Aptfile
 
+    # you can list packages
     libpq-dev
+    # or include links to specific .deb files
     http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-precise-amd64.deb
+    # or add custom apt repos
     :repo:deb http://cz.archive.ubuntu.com/ubuntu artful main universe
 
 #### Gemfile
