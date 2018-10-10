@@ -80,24 +80,46 @@ for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
 done
 
 topic "Writing profile script"
-mkdir -p $BUILD_DIR/.profile.d
-cat <<EOF >$BUILD_DIR/.profile.d/000_apt.sh
-export PATH="\$HOME/.apt/usr/bin:\$PATH"
-export LD_LIBRARY_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/usr/lib:\$LD_LIBRARY_PATH"
-export LIBRARY_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/usr/lib:\$LIBRARY_PATH"
-export INCLUDE_PATH="\$HOME/.apt/usr/include:\$HOME/.apt/usr/include/x86_64-linux-gnu:\$INCLUDE_PATH"
-export CPATH="\$INCLUDE_PATH"
-export CPPPATH="\$INCLUDE_PATH"
-export PKG_CONFIG_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/i386-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/pkgconfig:\$PKG_CONFIG_PATH"
+PROFILE_PATH="${BUILD_DIR}/.profile.d/000_apt.sh"
+mkdir -p ${PROFILE_PATH%/*}
+
+# Prepare base profile script
+# We don't interpolate $BUILD_DIR or any variables here so that they are instead interpolated during execution
+cat <<'EOF' > ${PROFILE_PATH}
+export PATH="${PATH_BUILD}${PATH}"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH_BUILD}${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${BUILD_DIR}/.apt/usr/lib/x86_64-linux-gnu:${BUILD_DIR}/.apt/usr/lib/i386-linux-gnu:${BUILD_DIR}/.apt/usr/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
+export INCLUDE_PATH="${BUILD_DIR}/.apt/usr/include:${BUILD_DIR}/.apt/usr/include/x86_64-linux-gnu${INCLUDE_PATH:+:$INCLUDE_PATH}"
+export PKG_CONFIG_PATH="${BUILD_DIR}/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:${BUILD_DIR}/.apt/usr/lib/i386-linux-gnu/pkgconfig:${BUILD_DIR}/.apt/usr/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export CPATH="${INCLUDE_PATH}" CPPPATH="${INCLUDE_PATH}"
 EOF
 
-export PATH="$BUILD_DIR/.apt/usr/bin:$PATH"
-export LD_LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu:$BUILD_DIR/.apt/usr/lib:$LD_LIBRARY_PATH"
-export LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu:$BUILD_DIR/.apt/usr/lib:$LIBRARY_PATH"
-export INCLUDE_PATH="$BUILD_DIR/.apt/usr/include:$BUILD_DIR/.apt/usr/include/x86_64-linux-gnu:$INCLUDE_PATH"
-export CPATH="$INCLUDE_PATH"
-export CPPPATH="$INCLUDE_PATH"
-export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/pkgconfig:$PKG_CONFIG_PATH"
+# Regex patterns (colon-delimited) to check for LD_LIBRARY_PATH
+# "/app" will be substituted with $BUILD_DIR during build and $HOME on deploy
+LD_LIBRARY_REGEX_PATTERNS="${LD_LIBRARY_REGEX_PATTERNS:+$LD_LIBRARY_REGEX_PATTERNS:}"'/app/\.apt/(usr/)?lib(/[^/]*)?'
+
+# Find directories under $BUILD_DIR/.apt matching given regex patterns
+# Concatenate non-interpolated paths into LD_LIBRARY_PATH_BUILD
+LD_LIBRARY_PATH_BUILD="${LD_LIBRARY_PATH_BUILD:+$LD_LIBRARY_PATH_BUILD:}"
+for FIND_PATH_PATTERN in $(echo -e ${LD_LIBRARY_REGEX_PATTERNS//':'/"\n"}); do
+  FIND_PATH_PATTERN=${FIND_PATH_PATTERN/#'/app'/"${BUILD_DIR}"}
+  LD_LIBRARY_PATH_BUILD+=$(find "${BUILD_DIR}/.apt" -type d -regextype 'posix-extended' -regex "${FIND_PATH_PATTERN}" -printf "\${BUILD_DIR}/.apt/%P:")
+done
+
+# Include "bin|sbin" paths into $PATH
+PATH_BUILD=$(find "${BUILD_DIR}/.apt" -maxdepth 2 -type d \( -name "bin" -o -name "sbin" \) -printf "\${BUILD_DIR}/.apt/%P:")
+
+# Insert our complete "BUILD" variables into the profile script
+for build_var in PATH_BUILD LD_LIBRARY_PATH_BUILD; do
+  sed -ie "1i${build_var}=\"${!build_var}\"" ${PROFILE_PATH}
+done
+
+# Execute profile script so we have the updated variables
+source ${PROFILE_PATH}
+
+# Replace '$BUILD_DIR' with '$HOME' in profile script (again, NOT interpolated)
+# This will be executed (and variables interpolated) on deploy
+sed -i 's/\bBUILD_DIR\b/HOME/g' ${PROFILE_PATH}
 
 #give environment to later buildpacks
 export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)='  > "$LP_DIR/export"
