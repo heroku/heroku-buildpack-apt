@@ -81,11 +81,11 @@ done
 
 topic "Writing profile script"
 PROFILE_PATH="${BUILD_DIR}/.profile.d/000_apt.sh"
-mkdir -p ${PROFILE_PATH%/*}
+mkdir -p "${PROFILE_PATH%/*}"
 
 # Prepare base profile script
 # We don't interpolate $BUILD_DIR or any variables here so that they are instead interpolated during execution
-cat <<'EOF' > ${PROFILE_PATH}
+cat <<'EOF' > "${PROFILE_PATH}"
 export PATH="${PATH_BUILD}${PATH}"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH_BUILD}${LD_LIBRARY_PATH}"
 export LIBRARY_PATH="${BUILD_DIR}/.apt/usr/lib/x86_64-linux-gnu:${BUILD_DIR}/.apt/usr/lib/i386-linux-gnu:${BUILD_DIR}/.apt/usr/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
@@ -96,7 +96,7 @@ EOF
 
 # Regex patterns (colon-delimited) to check for LD_LIBRARY_PATH
 # "/app" will be substituted with $BUILD_DIR during build and $HOME on deploy
-LD_LIBRARY_REGEX_PATTERNS="${LD_LIBRARY_REGEX_PATTERNS:+$LD_LIBRARY_REGEX_PATTERNS:}"'/app/\.apt/(usr/)?lib(/[^/]*)?'
+LD_LIBRARY_REGEX_PATTERNS="${LD_LIBRARY_REGEX_PATTERNS:+$LD_LIBRARY_REGEX_PATTERNS:}"'/app/\.apt/(usr/)?lib(/(x86_64|i386)-linux-gnu)?(/[^/]*)?'
 
 # Find directories under $BUILD_DIR/.apt matching given regex patterns
 # Concatenate non-interpolated paths into LD_LIBRARY_PATH_BUILD
@@ -111,15 +111,15 @@ PATH_BUILD=$(find "${BUILD_DIR}/.apt" -maxdepth 2 -type d \( -name "bin" -o -nam
 
 # Insert our complete "BUILD" variables into the profile script
 for build_var in PATH_BUILD LD_LIBRARY_PATH_BUILD; do
-  sed -ie "1i${build_var}=\"${!build_var}\"" ${PROFILE_PATH}
+  sed -i "1i${build_var}=\"${!build_var}\"" "${PROFILE_PATH}"
 done
 
 # Execute profile script so we have the updated variables
-source ${PROFILE_PATH}
+source "${PROFILE_PATH}"
 
-# Replace '$BUILD_DIR' with '$HOME' in profile script (again, NOT interpolated)
+# Replace '${BUILD_DIR}' with '${HOME}' in profile script (again, NOT interpolated)
 # This will be executed (and variables interpolated) on deploy
-sed -i 's/\bBUILD_DIR\b/HOME/g' ${PROFILE_PATH}
+sed -iu 's/${BUILD_DIR}/${HOME}/g' "${PROFILE_PATH}"
 
 #give environment to later buildpacks
 export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)='  > "$LP_DIR/export"
