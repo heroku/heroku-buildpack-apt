@@ -35,16 +35,27 @@ APT_SOURCELIST_DIR="$CACHE_DIR/apt/sources"   # place custom sources.list here
 
 APT_SOURCES="$APT_SOURCELIST_DIR/sources.list"
 
-if [ -f $APT_CACHE_DIR/Aptfile ] && cmp -s $BUILD_DIR/Aptfile $APT_CACHE_DIR/Aptfile ; then
+APT_CACHE_STACK=
+if [ -f "$APT_CACHE_DIR/Stackfile" ]; then
+  # Confirm stack matches Stackfile
+  APT_CACHE_STACK=$(head -1 "$APT_CACHE_DIR/Stackfile" )
+elif [ -f "$APT_SOURCES" ] && [[ $(head -1 "/etc/apt/sources.list") == $(head -1 "$APT_SOURCES") ]]; then
+  # Confirm stack match via sources.list
+  APT_CACHE_STACK="$STACK"
+fi
+
+# Only reuse cache if the stack and aptfile haven't changed
+if [[ "$STACK" == "$APT_CACHE_STACK" ]] && [ -f $APT_CACHE_DIR/Aptfile ] && cmp -s $BUILD_DIR/Aptfile $APT_CACHE_DIR/Aptfile ; then
   # Old Aptfile is the same as new
   topic "Reusing cache"
 else
-  # Aptfile changed or does not exist
-  topic "Detected Aptfile changes, flushing cache"
+  # Aptfile/Stack changed or does not exist
+  topic "Detected Stack/Aptfile changes, flushing cache"
   rm -rf $APT_CACHE_DIR
   mkdir -p "$APT_CACHE_DIR/archives/partial"
   mkdir -p "$APT_STATE_DIR/lists/partial"
   mkdir -p "$APT_SOURCELIST_DIR"   # make dir for sources
+  echo "$STACK" > "$APT_CACHE_DIR/Stackfile" # Remember stack
   cp -f "$BUILD_DIR/Aptfile" "$APT_CACHE_DIR/Aptfile"
   cat "/etc/apt/sources.list" > "$APT_SOURCES"    # no cp here
   # add custom repositories from Aptfile to sources.list
@@ -69,7 +80,7 @@ for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:
     curl -s -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
   else
     topic "Fetching .debs for $PACKAGE"
-    apt-get $APT_OPTIONS -y --force-yes -d install --reinstall $PACKAGE | indent
+    DEBIAN_FRONTEND=noninteractive apt-get $APT_OPTIONS -y -d install --reinstall $PACKAGE | indent
   fi
 done
 
@@ -81,24 +92,46 @@ for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
 done
 
 topic "Writing profile script"
-mkdir -p $BUILD_DIR/.profile.d
-cat <<EOF >$BUILD_DIR/.profile.d/000_apt.sh
-export PATH="\$HOME/.apt/usr/bin:\$PATH"
-export LD_LIBRARY_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/usr/lib:\$LD_LIBRARY_PATH"
-export LIBRARY_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/usr/lib:\$LIBRARY_PATH"
-export INCLUDE_PATH="\$HOME/.apt/usr/include:\$HOME/.apt/usr/include/x86_64-linux-gnu:\$INCLUDE_PATH"
-export CPATH="\$INCLUDE_PATH"
-export CPPPATH="\$INCLUDE_PATH"
-export PKG_CONFIG_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/i386-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/pkgconfig:\$PKG_CONFIG_PATH"
+PROFILE_PATH="${BUILD_DIR}/.profile.d/000_apt.sh"
+mkdir -p "${PROFILE_PATH%/*}"
+
+# Prepare base profile script
+# We don't interpolate $BUILD_DIR or any variables here so that they are instead interpolated during execution
+cat <<'EOF' > "${PROFILE_PATH}"
+export PATH="${PATH_BUILD}${PATH}"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH_BUILD}${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${BUILD_DIR}/.apt/usr/lib/x86_64-linux-gnu:${BUILD_DIR}/.apt/usr/lib/i386-linux-gnu:${BUILD_DIR}/.apt/usr/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
+export INCLUDE_PATH="${BUILD_DIR}/.apt/usr/include:${BUILD_DIR}/.apt/usr/include/x86_64-linux-gnu${INCLUDE_PATH:+:$INCLUDE_PATH}"
+export PKG_CONFIG_PATH="${BUILD_DIR}/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:${BUILD_DIR}/.apt/usr/lib/i386-linux-gnu/pkgconfig:${BUILD_DIR}/.apt/usr/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export CPATH="${INCLUDE_PATH}" CPPPATH="${INCLUDE_PATH}"
 EOF
 
-export PATH="$BUILD_DIR/.apt/usr/bin:$PATH"
-export LD_LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu:$BUILD_DIR/.apt/usr/lib:$LD_LIBRARY_PATH"
-export LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu:$BUILD_DIR/.apt/usr/lib:$LIBRARY_PATH"
-export INCLUDE_PATH="$BUILD_DIR/.apt/usr/include:$BUILD_DIR/.apt/usr/include/x86_64-linux-gnu:$INCLUDE_PATH"
-export CPATH="$INCLUDE_PATH"
-export CPPPATH="$INCLUDE_PATH"
-export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/pkgconfig:$PKG_CONFIG_PATH"
+# Regex patterns (colon-delimited) to check for LD_LIBRARY_PATH
+# "/app" will be substituted with $BUILD_DIR during build and $HOME on deploy
+LD_LIBRARY_REGEX_PATTERNS="${LD_LIBRARY_REGEX_PATTERNS:+$LD_LIBRARY_REGEX_PATTERNS:}"'/app/\.apt/(usr/)?lib(/(x86_64|i386)-linux-gnu)?(/[^/]*)?'
+
+# Find directories under $BUILD_DIR/.apt matching given regex patterns
+# Concatenate non-interpolated paths into LD_LIBRARY_PATH_BUILD
+LD_LIBRARY_PATH_BUILD="${LD_LIBRARY_PATH_BUILD:+$LD_LIBRARY_PATH_BUILD:}"
+for FIND_PATH_PATTERN in $(echo -e ${LD_LIBRARY_REGEX_PATTERNS//':'/"\n"}); do
+  FIND_PATH_PATTERN=${FIND_PATH_PATTERN/#'/app'/"${BUILD_DIR}"}
+  LD_LIBRARY_PATH_BUILD+=$(find "${BUILD_DIR}/.apt" -type d -regextype 'posix-extended' -regex "${FIND_PATH_PATTERN}" -printf "\${BUILD_DIR}/.apt/%P:")
+done
+
+# Include "bin|sbin" paths into $PATH
+PATH_BUILD=$(find "${BUILD_DIR}/.apt" -maxdepth 2 -type d \( -name "bin" -o -name "sbin" \) -printf "\${BUILD_DIR}/.apt/%P:")
+
+# Insert our complete "BUILD" variables into the profile script
+for build_var in PATH_BUILD LD_LIBRARY_PATH_BUILD; do
+  sed -i "1i${build_var}=\"${!build_var}\"" "${PROFILE_PATH}"
+done
+
+# Execute profile script so we have the updated variables
+source "${PROFILE_PATH}"
+
+# Replace '${BUILD_DIR}' with '${HOME}' in profile script (again, NOT interpolated)
+# This will be executed (and variables interpolated) on deploy
+sed -iu 's/${BUILD_DIR}/${HOME}/g' "${PROFILE_PATH}"
 
 #give environment to later buildpacks
 export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)='  > "$LP_DIR/export"
