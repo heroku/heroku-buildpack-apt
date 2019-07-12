@@ -12,25 +12,30 @@ Include a list of apt package names to be installed in a file named `Aptfile`
 
 #### Setup
 
-Configure your app with multi buildpack
+Configure your app with multi buildpacks:
 
 ```
 scalingo env-set BUILDPACK_URL=https://github.com/Scalingo/multi-buildpack
 ```
 
-Example of `.buildpack file`:
+Example of `.buildpacks` file:
 
 ```
 https://github.com/Scalingo/apt-buildpack
 https://github.com/Scalingo/ruby-buildpack
 ```
 
+Note that the order of the buildpacks in the `.buildpacks` file matters.
+
 ## Example
 
 #### Aptfile
 
+    # you can list packages
     libpq-dev
+    # or include links to specific .deb files
     http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-precise-amd64.deb
+    # or add custom apt repos
     :repo:deb http://cz.archive.ubuntu.com/ubuntu artful main universe
 
 #### Gemfile
