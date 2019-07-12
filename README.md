@@ -12,26 +12,20 @@ Include a list of apt package names to be installed in a file named `Aptfile`
 
 #### Setup
 
-Configure your app with multi buildpack
-
-To use the latest stable version:
-
-```
-heroku buildpacks:add --index 1 heroku-community/apt
-```
-
-To use the edge version (i.e. the code in this repo):
+Configure your app with multi buildpacks:
 
 ```
 scalingo env-set BUILDPACK_URL=https://github.com/Scalingo/multi-buildpack
 ```
 
-Example of `.buildpack file`:
+Example of `.buildpacks` file:
 
 ```
 https://github.com/Scalingo/apt-buildpack
 https://github.com/Scalingo/ruby-buildpack
 ```
+
+Note that the order of the buildpacks in the `.buildpacks` file matters.
 
 ## Example
 
