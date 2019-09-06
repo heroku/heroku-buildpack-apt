@@ -35,6 +35,13 @@ APT_SOURCELIST_DIR="$CACHE_DIR/apt/sources"   # place custom sources.list here
 
 APT_SOURCES="$APT_SOURCELIST_DIR/sources.list"
 
+APT_VERSION=$(apt-get -v | awk 'NR == 1{ print $2 }')
+
+case "$APT_VERSION" in
+  0* | 1.0*) APT_FORCE_YES="--force-yes";;
+  *)         APT_FORCE_YES="--allow-downgrades --allow-remove-essential --allow-change-held-packages";;
+esac
+
 if [ -f $APT_CACHE_DIR/Aptfile ] && cmp -s $BUILD_DIR/Aptfile $APT_CACHE_DIR/Aptfile ; then
   # Old Aptfile is the same as new
   topic "Reusing cache"
@@ -69,7 +76,7 @@ for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:
     curl -s -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
   else
     topic "Fetching .debs for $PACKAGE"
-    apt-get $APT_OPTIONS -y --force-yes -d install --reinstall $PACKAGE | indent
+    apt-get $APT_OPTIONS -y $APT_FORCE_YES -d install --reinstall $PACKAGE | indent
   fi
 done
 
