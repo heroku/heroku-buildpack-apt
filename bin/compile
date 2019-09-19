@@ -67,7 +67,8 @@ APT_OPTIONS="$APT_OPTIONS -o dir::etc::sourcelist=$APT_SOURCES -o dir::etc::sour
 topic "Updating apt caches"
 apt-get $APT_OPTIONS update | indent
 
-for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:repo:"); do
+# BEGIN: installing packages
+for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:repo:" | grep -v -s -e '^blackhole '); do
   if [[ $PACKAGE == *deb ]]; then
     PACKAGE_NAME=$(basename $PACKAGE .deb)
     PACKAGE_FILE=$APT_CACHE_DIR/archives/$PACKAGE_NAME.deb
@@ -86,6 +87,20 @@ for DEB in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
   topic "Installing $(basename $DEB)"
   dpkg -x $DEB $BUILD_DIR/.apt/
 done
+# END: installing packages
+
+# BEGIN: blackhole binaries
+# We wanted to `apt-get remove` preinstalled packages, but the root filesystem is read-only.
+# The best we can do is basically make a verbose version of /bin/false, name it the same as the
+# target binary, and have it come before the target binary in the PATH.
+cat $BUILD_DIR/Aptfile | grep -s -e '^blackhole ' | while read BLACKHOLE_LINE; do
+  BINARY_NAME=$(echo "$BLACKHOLE_LINE" | sed -e 's/^blackhole //')
+  topic "Blackholing $BINARY_NAME"
+  mkdir -p $BUILD_DIR/.apt/usr/bin
+  echo 'echo "THIS BINARY HAS BEEN BLACKHOLED"; exit 1' > "$BUILD_DIR/.apt/usr/bin/$BINARY_NAME"
+  chmod ugo=rx "$BUILD_DIR/.apt/usr/bin/$BINARY_NAME"
+done
+# END: blackhole packages
 
 topic "Writing profile script"
 mkdir -p $BUILD_DIR/.profile.d
