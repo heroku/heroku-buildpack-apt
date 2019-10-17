@@ -45,6 +45,17 @@ testStackNoChange() {
   assertCaptured "Reusing cache"
 }
 
+testStackCached() {
+  # Test that we are correctly storing the value of STACK in the cache
+  loadFixture "Aptfile"
+
+  compile
+  assertCapturedSuccess
+
+  CACHED_STACK=$(cat "$CACHE_DIR/.apt/STACK")
+  assertTrue 'STACK not cached' "[[ $CACHED_STACK == $STACK ]]"
+}
+
 loadFixture() {
   cp -a $BUILDPACK_HOME/test/fixtures/$1/. ${BUILD_DIR}
 }
