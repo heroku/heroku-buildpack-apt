@@ -31,6 +31,13 @@ function indent() {
   esac
 }
 
+# Store which STACK we are running on in the cache to bust the cache if it changes
+if [ -f $CACHE_DIR/.apt/STACK ]; then
+  CACHED_STACK=$(cat "$CACHE_DIR/.apt/STACK")
+else
+  CACHED_STACK=$STACK
+fi
+
 APT_CACHE_DIR="$CACHE_DIR/apt/cache"
 APT_STATE_DIR="$CACHE_DIR/apt/state"
 APT_SOURCELIST_DIR="$CACHE_DIR/apt/sources"   # place custom sources.list here
@@ -45,7 +52,7 @@ case "$APT_VERSION" in
   *)         APT_FORCE_YES="--allow-downgrades --allow-remove-essential --allow-change-held-packages";;
 esac
 
-if [ -f $APT_CACHE_DIR/$APT_FILE_MANIFEST ] && cmp -s $BUILD_DIR/$APT_FILE_MANIFEST $APT_CACHE_DIR/$APT_FILE_MANIFEST ; then
+if [ -f $APT_CACHE_DIR/$APT_FILE_MANIFEST ] && cmp -s $BUILD_DIR/$APT_FILE_MANIFEST $APT_CACHE_DIR/$APT_FILE_MANIFEST && [[ $CACHED_STACK == $STACK ]] ; then
   # Old Aptfile is the same as new
   topic "Reusing cache"
 else
@@ -115,3 +122,6 @@ export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPP
 
 topic "Rewrite package-config files"
 find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs --no-run-if-empty -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$BUILD_DIR"'/.apt\1!g'
+
+# Store which STACK we are running on in the cache to bust the cache if it changes
+echo "$STACK" > "$CACHE_DIR/.apt/STACK"
