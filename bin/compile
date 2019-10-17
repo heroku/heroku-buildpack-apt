@@ -59,8 +59,8 @@ if [ -f $APT_CACHE_DIR/$APT_FILE_MANIFEST ] && cmp -s $BUILD_DIR/$APT_FILE_MANIF
   # Old Aptfile is the same as new
   topic "Reusing cache"
 else
-  # Aptfile changed or does not exist
-  topic "Detected Aptfile changes, flushing cache"
+  # Aptfile changed or does not exist or STACK changed
+  topic "Detected Aptfile or Stack changes, flushing cache"
   rm -rf $APT_CACHE_DIR
   mkdir -p "$APT_CACHE_DIR/archives/partial"
   mkdir -p "$APT_STATE_DIR/lists/partial"
