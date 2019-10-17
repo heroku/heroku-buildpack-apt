@@ -46,7 +46,6 @@ testStackNoChange() {
 }
 
 testStackCached() {
-  # Test that we are correctly storing the value of STACK in the cache
   loadFixture "Aptfile"
 
   compile
