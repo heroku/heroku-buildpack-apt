@@ -21,7 +21,7 @@ testStackChange() {
   #Set the cached STACK value to a non-existent stack, so it is guaranteed to change.
   mkdir -p "$CACHE_DIR/.apt/"
   echo "cedar-10" > "$CACHE_DIR/.apt/STACK"
-  
+
   #Load the Aptfile into the cache, to exclusively test the stack changes
   mkdir -p "$CACHE_DIR/apt/cache"
   cp $BUILD_DIR/Aptfile "$CACHE_DIR/apt/cache"
