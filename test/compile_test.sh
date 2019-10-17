@@ -46,12 +46,16 @@ testStackNoChange() {
 }
 
 testStackCached() {
+  # Test that we are correctly storing the value of STACK in the cache
   loadFixture "Aptfile"
 
   compile
   assertCapturedSuccess
 
   assertTrue 'STACK not cached' "[ -e $CACHE_DIR/.apt/STACK ]"
+
+  CACHED_STACK=$(cat "$CACHE_DIR/.apt/STACK")
+  assertTrue 'STACK not cached' "[[ $CACHED_STACK == $STACK ]]"
 }
 
 loadFixture() {
