@@ -29,6 +29,12 @@ function indent() {
   esac
 }
 
+topic "print Env"
+
+echo $BUILD_DIR
+echo $CACHE_DIR
+echo $HOME
+
 # Store which STACK we are running on in the cache to bust the cache if it changes
 if [ -f $CACHE_DIR/.apt/STACK ]; then
   CACHED_STACK=$(cat "$CACHE_DIR/.apt/STACK")
