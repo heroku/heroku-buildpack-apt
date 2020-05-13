@@ -78,6 +78,8 @@ APT_OPTIONS="$APT_OPTIONS -o dir::etc::sourcelist=$APT_SOURCES -o dir::etc::sour
 topic "Updating apt caches"
 apt-get $APT_OPTIONS update | indent
 
+PACKAGES="$CACHE_DIR/package-list"
+
 for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:repo:"); do
   if [[ $PACKAGE == *deb ]]; then
     PACKAGE_NAME=$(basename $PACKAGE .deb)
@@ -85,11 +87,31 @@ for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:
 
     topic "Fetching $PACKAGE"
     curl -s -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
+    echo $PACKAGE_NAME >> $PACKAGES
   else
     topic "Fetching .debs for $PACKAGE"
     apt-get $APT_OPTIONS -y $APT_FORCE_YES -d install --reinstall $PACKAGE | indent
+
+    # Changes the archives location to ensure the package urls are printed.
+    # Nothing is downloaded/updated here so the archive location can be set to anywhere
+    # other than the actual archives location without issue.
+    apt-get $APT_OPTIONS -y $APT_FORCE_YES -o dir::cache::archives=$APT_CACHE_DIR \
+      install --print-uris --reinstall $PACKAGE | \
+      grep ^\' | awk '{print $2}' >> $PACKAGES
   fi
 done
+
+# Removes duplicate file names
+cat $PACKAGES | awk '!seen[$0]++' > "$PACKAGES-clean"
+mv "$PACKAGES-clean" $PACKAGES
+
+# Remove outdated and leftover packages
+topic "Cleaning up outdated and leftover packages"
+find $APT_CACHE_DIR/archives -type f -name "*.deb" | \
+  grep -vFf $PACKAGES | xargs --no-run-if-empty rm
+
+# Remove the packages list file so we have a clean file for subsequent runs
+rm $PACKAGES
 
 mkdir -p $BUILD_DIR/.apt
 
