@@ -1,7 +1,9 @@
 # APT Buildpack Changelog
 
-## Unreleased
+## 2021-01-15
 
+- Fail the build if `apt-get` or `curl` errors ([#79](https://github.com/heroku/heroku-buildpack-apt/pull/79)).
+- Only try to add custom repositories when some are defined in `Aptfile` ([#79](https://github.com/heroku/heroku-buildpack-apt/pull/79)).
 
 ## 2019-10-17
 
