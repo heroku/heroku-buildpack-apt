@@ -1,5 +1,9 @@
 # APT Buildpack Changelog
 
+## Unreleased
+
+- Output a helpful error message when no `Aptfile` is found ([#87](https://github.com/heroku/heroku-buildpack-apt/pull/87)).
+
 ## 2021-01-15
 
 - Fail the build if `apt-get` or `curl` errors ([#79](https://github.com/heroku/heroku-buildpack-apt/pull/79)).
