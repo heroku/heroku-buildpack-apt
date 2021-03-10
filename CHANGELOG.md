@@ -8,6 +8,7 @@
 * Flush the cache on stack change ([#58](https://github.com/heroku/heroku-buildpack-apt/pull/58)).
 * Fail the build if `apt-get` or `curl` errors ([#79](https://github.com/heroku/heroku-buildpack-apt/pull/79)).
 * Only try to add custom repositories when some are defined in `Aptfile` ([#79](https://github.com/heroku/heroku-buildpack-apt/pull/79)).
+* Output a helpful error message when no `Aptfile` is found ([#87](https://github.com/heroku/heroku-buildpack-apt/pull/87)).
 
 ## Version 1.1
 

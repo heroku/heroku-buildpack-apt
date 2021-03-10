@@ -6,7 +6,9 @@
 APT_FILE_MANIFEST=${APT_FILE_MANIFEST:-Aptfile}
 
 if [ -f "$1/${APT_FILE_MANIFEST}" ]; then
-  echo "Apt" && exit 0
+  echo "Apt"
+  exit 0
 else
-  echo "no" && exit 1
+  echo "Could not find an 'Aptfile'! Please ensure it exists and is checked into Git." >&2
+  exit 1
 fi
