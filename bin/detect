@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # bin/detect <build-dir>
 
-if [ -f $1/Aptfile ]; then
+[ "$BUILDPACK_DEBUG" = "true" ] && set -x
+
+APT_FILE_MANIFEST=${APT_FILE_MANIFEST:-Aptfile}
+
+if [ -f "$1/${APT_FILE_MANIFEST}" ]; then
   echo "Apt" && exit 0
 else
   echo "no" && exit 1
