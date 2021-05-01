@@ -2,7 +2,7 @@
 # bin/compile <build-dir> <cache-dir>
 
 # fail fast
-set -eo pipefail
+set -e
 
 # debug
 # set -x
@@ -43,8 +43,11 @@ echo "$STACK" > "$CACHE_DIR/.apt/STACK"
 APT_CACHE_DIR="$CACHE_DIR/apt/cache"
 APT_STATE_DIR="$CACHE_DIR/apt/state"
 APT_SOURCELIST_DIR="$CACHE_DIR/apt/sources"   # place custom sources.list here
+APT_TRUSTED_DIR="$CACHE_DIR/apt/trusted.gpg.d"
 
 APT_SOURCES="$APT_SOURCELIST_DIR/sources.list"
+
+EXISTING_TRUSTED_DIR="/etc/apt/trusted.gpg.d"
 
 APT_VERSION=$(apt-get -v | awk 'NR == 1{ print $2 }')
 
@@ -60,33 +63,50 @@ else
   # Aptfile changed or does not exist or STACK changed
   topic "Detected Aptfile or Stack changes, flushing cache"
   rm -rf $APT_CACHE_DIR
+  rm -rf "$APT_TRUSTED_DIR"
   mkdir -p "$APT_CACHE_DIR/archives/partial"
   mkdir -p "$APT_STATE_DIR/lists/partial"
   mkdir -p "$APT_SOURCELIST_DIR"   # make dir for sources
+  mkdir -p "$APT_TRUSTED_DIR"      # make dir for trusted keys
   cp -f "$BUILD_DIR/Aptfile" "$APT_CACHE_DIR/Aptfile"
+
+  if [[ -d $EXISTING_TRUSTED_DIR && -n "$(ls -A $EXISTING_TRUSTED_DIR)" ]]; then
+    cp -f /etc/apt/trusted.gpg.d/* "$APT_TRUSTED_DIR" # copy existing keys to new trusted keys dir
+  fi
+
   cat "/etc/apt/sources.list" > "$APT_SOURCES"    # no cp here
+
   # add custom repositories from Aptfile to sources.list
   # like>>    :repo:deb http://cz.archive.ubuntu.com/ubuntu artful main universe
-  if grep -q -e "^:repo:" $BUILD_DIR/Aptfile; then
-    topic "Adding custom repositories"
-    cat $BUILD_DIR/Aptfile | grep -s -e "^:repo:" | sed 's/^:repo:\(.*\)\s*$/\1/g' >> $APT_SOURCES
-  fi
+  topic "Adding custom repositories"
+  cat $BUILD_DIR/Aptfile | grep -s -e "^:repo:" | sed 's/^:repo:\(.*\)\s*$/\1/g' >> $APT_SOURCES
+
+  # add custom keys from Aptfile to to the trusted keys directory
+  # like>>    :key:name:https://nginx.org/keys/nginx_signing.key
+  for key in $(cat $BUILD_DIR/Aptfile |grep -s -e '^:key:'| sed 's/^:key:\(.*\)\s*$/\1/g'); do
+    name=$(echo "$key"|sed 's/^\([^:]*\):.*$/\1/')
+    url=$(echo "$key"|sed 's/^[^:]*://')
+
+    topic "adding key for $name"
+    curl -sS "$url" | gpg --dearmor > "$APT_TRUSTED_DIR/$name.gpg"
+  done
 fi
 
 APT_OPTIONS="-o debug::nolocking=true -o dir::cache=$APT_CACHE_DIR -o dir::state=$APT_STATE_DIR"
 # Override the use of /etc/apt/sources.list (sourcelist) and /etc/apt/sources.list.d/* (sourceparts).
 APT_OPTIONS="$APT_OPTIONS -o dir::etc::sourcelist=$APT_SOURCES -o dir::etc::sourceparts=/dev/null"
+APT_OPTIONS="$APT_OPTIONS -o dir::etc::trustedparts=$APT_TRUSTED_DIR"
 
 topic "Updating apt caches"
 apt-get $APT_OPTIONS update | indent
 
-for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:repo:"); do
+for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:repo:" | grep -v -s -e "^:key:"); do
   if [[ $PACKAGE == *deb ]]; then
     PACKAGE_NAME=$(basename $PACKAGE .deb)
     PACKAGE_FILE=$APT_CACHE_DIR/archives/$PACKAGE_NAME.deb
 
     topic "Fetching $PACKAGE"
-    curl --silent --show-error --fail -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
+    curl -s -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
   else
     topic "Fetching .debs for $PACKAGE"
     apt-get $APT_OPTIONS -y $APT_FORCE_YES -d install --reinstall $PACKAGE | indent
