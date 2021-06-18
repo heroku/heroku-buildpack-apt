@@ -2,7 +2,9 @@
 # bin/detect <build-dir>
 
 if [ -f $1/Aptfile ]; then
-  echo "Apt" && exit 0
+  echo "Apt"
+  exit 0
 else
-  echo "no" && exit 1
+  echo "Could not find an 'Aptfile'! Please ensure it exists and is checked into Git." >&2
+  exit 1
 fi

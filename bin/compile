@@ -2,7 +2,7 @@
 # bin/compile <build-dir> <cache-dir>
 
 # fail fast
-set -e
+set -eo pipefail
 
 # debug
 # set -x
@@ -67,8 +67,10 @@ else
   cat "/etc/apt/sources.list" > "$APT_SOURCES"    # no cp here
   # add custom repositories from Aptfile to sources.list
   # like>>    :repo:deb http://cz.archive.ubuntu.com/ubuntu artful main universe
-  topic "Adding custom repositories"
-  cat $BUILD_DIR/Aptfile | grep -s -e "^:repo:" | sed 's/^:repo:\(.*\)\s*$/\1/g' >> $APT_SOURCES
+  if grep -q -e "^:repo:" $BUILD_DIR/Aptfile; then
+    topic "Adding custom repositories"
+    cat $BUILD_DIR/Aptfile | grep -s -e "^:repo:" | sed 's/^:repo:\(.*\)\s*$/\1/g' >> $APT_SOURCES
+  fi
 fi
 
 APT_OPTIONS="-o debug::nolocking=true -o dir::cache=$APT_CACHE_DIR -o dir::state=$APT_STATE_DIR"
@@ -85,7 +87,7 @@ for PACKAGE in $(cat $BUILD_DIR/Aptfile | grep -v -s -e '^#' | grep -v -s -e "^:
     PACKAGE_FILE=$APT_CACHE_DIR/archives/$PACKAGE_NAME.deb
 
     topic "Fetching $PACKAGE"
-    curl -s -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
+    curl --silent --show-error --fail -L -z $PACKAGE_FILE -o $PACKAGE_FILE $PACKAGE 2>&1 | indent
   else
     topic "Fetching .debs for $PACKAGE"
     apt-get $APT_OPTIONS -y $APT_FORCE_YES -d install --reinstall $PACKAGE | indent
