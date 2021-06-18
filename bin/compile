@@ -106,13 +106,15 @@ done
 # We wanted to `apt-get remove` preinstalled packages, but the root filesystem is read-only.
 # The best we can do is basically make a verbose version of /bin/false, name it the same as the
 # target binary, and have it come before the target binary in the PATH.
-cat $BUILD_DIR/Aptfile | grep -s -e '^blackhole ' | while read BLACKHOLE_LINE; do
+while read BLACKHOLE_LINE; do
   BINARY_NAME=$(echo "$BLACKHOLE_LINE" | sed -e 's/^blackhole //')
   topic "Blackholing $BINARY_NAME"
   mkdir -p $BUILD_DIR/.apt/usr/bin
   echo 'echo "THIS BINARY HAS BEEN BLACKHOLED"; exit 1' > "$BUILD_DIR/.apt/usr/bin/$BINARY_NAME"
   chmod ugo=rx "$BUILD_DIR/.apt/usr/bin/$BINARY_NAME"
-done
+done < <(
+  cat $BUILD_DIR/Aptfile | grep -s -e '^blackhole '
+)
 # END: blackhole packages
 
 topic "Writing profile script"
