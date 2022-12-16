@@ -1,4 +1,4 @@
-# APT buildpack [![Build Status](https://travis-ci.org/heroku/heroku-buildpack-apt.svg?branch=master)](https://travis-ci.org/heroku/heroku-buildpack-apt)
+# APT buildpack
 
 Add support for apt-based dependencies during both compile and runtime.
 
@@ -8,7 +8,12 @@ Added ability to also specify custom repositories through **:repo:** in `Aptfile
 
 This buildpack is not meant to be used on its own, and instead should be in used in combination with Scalingo's [multiple buildpack support](https://doc.scalingo.com/buildpacks/multi).
 
-Include a list of apt package names to be installed in a file named `Aptfile`
+Include a list of apt package names to be installed in a file named `Aptfile`.
+
+To find out what packages are available, see:
+<https://packages.ubuntu.com>
+
+See the [Scalingo stacks](https://doc.scalingo.com/platform/internals/stacks/stacks) documentation for which Ubuntu LTS version is used by each stack.
 
 #### Setup
 
@@ -33,9 +38,11 @@ Note that the order of the buildpacks in the `.buildpacks` file matters.
 
     # you can list packages
     libpq-dev
+
     # or include links to specific .deb files
     http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-precise-amd64.deb
-    # or add custom apt repos
+
+    # or add custom apt repos (only required if using packages outside of the standard Ubuntu APT repositories)
     :repo:deb http://cz.archive.ubuntu.com/ubuntu artful main universe
 
 #### Gemfile
