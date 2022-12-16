@@ -12,7 +12,7 @@ fi
 # parse and derive params
 BUILD_DIR=$1
 CACHE_DIR=$2
-LP_DIR=`cd $(dirname $0); cd ..; pwd`
+LP_DIR=$(cd $(dirname $0); cd ..; pwd)
 
 function error() {
   echo " !     $*" >&2
