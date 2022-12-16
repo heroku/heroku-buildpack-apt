@@ -1,4 +1,4 @@
-# APT buildpack [![Build Status](https://travis-ci.org/heroku/heroku-buildpack-apt.svg?branch=master)](https://travis-ci.org/heroku/heroku-buildpack-apt)
+# APT buildpack
 
 Add support for apt-based dependencies during both compile and runtime.
 
@@ -13,8 +13,7 @@ Include a list of apt package names to be installed in a file named `Aptfile`.
 To find out what packages are available, see:
 <https://packages.ubuntu.com>
 
-See the [Heroku Stacks](https://devcenter.heroku.com/articles/stack) documention for which
-Ubuntu LTS version is used by each Heroku stack.
+See the [Scalingo stacks](https://doc.scalingo.com/platform/internals/stacks/stacks) documentation for which Ubuntu LTS version is used by each stack.
 
 #### Setup
 
@@ -38,7 +37,7 @@ Note that the order of the buildpacks in the `.buildpacks` file matters.
 #### Aptfile
 
     # you can list packages
-    libexample-dev
+    libpq-dev
 
     # or include links to specific .deb files
     http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-precise-amd64.deb
