@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# bin/report <build-dir> <cache-dir> <env-dir>
+
+### Configure environment
+
+set -o errexit    # always exit on error
+set -o pipefail   # don't ignore exit codes when piping output
+
+BUILD_DIR=${1:-}
+
+# <separator> <array>
+joinArrayWithSeparator() {
+  local IFS="$1"
+  shift
+  echo "$*"
+}
+
+packages=()
+custom_packages=()
+custom_repositories=()
+
+while IFS= read -r line; do
+  if [[ $line ]]; then
+    if echo "${line}" | grep -q -e "^:repo:"; then
+      custom_repositories+=("${line//:repo:/}")
+    elif [[ $line == *deb ]]; then
+      custom_packages+=("${line}")
+    else
+      packages+=("${line}")
+    fi
+  fi
+done < <(grep -v -s -e '^#' < "${BUILD_DIR}/Aptfile")
+
+echo "packages: \"$(joinArrayWithSeparator "," "${packages[@]}")\""
+echo "custom_packages: \"$(joinArrayWithSeparator "," "${custom_packages[@]}")\""
+echo "custom_repositories: \"$(joinArrayWithSeparator "," "${custom_repositories[@]}")\""

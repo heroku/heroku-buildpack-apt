@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add `bin/report` script to capture buildpack metadata
 
 ## 2021-03-10
 
