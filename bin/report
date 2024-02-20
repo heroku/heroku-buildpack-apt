@@ -20,8 +20,8 @@ custom_packages=()
 custom_repositories=()
 
 while IFS= read -r line; do
-  if [[ $line ]]; then
-    if echo "${line}" | grep -q -e "^:repo:"; then
+  if grep --silent --invert-match -e "^#" -e "^\s*$" <<< "${line}"; then
+    if grep --silent -e "^:repo:" <<< "${line}"; then
       custom_repositories+=("${line//:repo:/}")
     elif [[ $line == *deb ]]; then
       custom_packages+=("${line}")
@@ -29,7 +29,7 @@ while IFS= read -r line; do
       packages+=("${line}")
     fi
   fi
-done < <(grep -v -s -e '^#' < "${BUILD_DIR}/Aptfile")
+done < "${BUILD_DIR}/Aptfile"
 
 echo "packages: \"$(joinArrayWithSeparator "," "${packages[@]}")\""
 echo "custom_packages: \"$(joinArrayWithSeparator "," "${custom_packages[@]}")\""
