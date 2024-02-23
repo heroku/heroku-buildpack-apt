@@ -8,13 +8,6 @@ set -o pipefail   # don't ignore exit codes when piping output
 
 BUILD_DIR=${1:-}
 
-# <separator> <array>
-joinArrayWithSeparator() {
-  local IFS="$1"
-  shift
-  echo "$*"
-}
-
 packages=()
 custom_packages=()
 custom_repositories=()
@@ -31,6 +24,17 @@ while IFS= read -r line; do
   fi
 done < "${BUILD_DIR}/Aptfile"
 
-echo "packages: \"$(joinArrayWithSeparator "," "${packages[@]}")\""
-echo "custom_packages: \"$(joinArrayWithSeparator "," "${custom_packages[@]}")\""
-echo "custom_repositories: \"$(joinArrayWithSeparator "," "${custom_repositories[@]}")\""
+output_key_value() {
+  local key value
+  key="$1"
+  shift
+  # sort & join the array values with a ',' then escape both '\' and '"' characters
+  value=$(printf '%s\n' "$@" | sort | tr '\n' ',' | sed 's/,$/\n/' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
+  if [[ -n "${value}" ]]; then
+    echo "$key: \"$value\""
+  fi
+}
+
+output_key_value "packages" "${packages[@]}"
+output_key_value "custom_packages" "${custom_packages[@]}"
+output_key_value "custom_repositories" "${custom_repositories[@]}"
