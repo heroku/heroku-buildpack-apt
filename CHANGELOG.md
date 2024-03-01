@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Add `bin/report` script to capture buildpack metadata
+## 2024-03-01
+
+- Add `bin/report` script to capture buildpack metadata ([#110](https://github.com/heroku/heroku-buildpack-apt/pull/110))
 
 ## 2021-03-10
 
