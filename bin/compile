@@ -125,3 +125,4 @@ export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPP
 
 topic "Rewrite package-config files"
 find $BUILD_DIR/.apt -type f -ipath '*/pkgconfig/*.pc' | xargs --no-run-if-empty -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$BUILD_DIR"'/.apt\1!g'
+find $BUILD_DIR/.apt -type f -name 'xmlsec1-config' | xargs --no-run-if-empty -n 1 sed -i -e 's!^prefix="\(.*\)"$!prefix="'"$BUILD_DIR"'/.apt\1"!g' -e 's!^libdir="\(.*\)"$!libdir="'"$BUILD_DIR"'/.apt\1"!g'
