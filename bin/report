@@ -18,7 +18,13 @@ while IFS= read -r line; do
   elif [[ $line == *deb ]]; then
     custom_packages+=("${line}")
   else
-    packages+=("${line}")
+    # while this is not documented behavior, the Aptfile format technically
+    # does allow for multiple packages separated by spaces to be specified
+    # on a single line due to how the download command is implemented
+    IFS=' ' read -ra package_names <<< "${line}"
+    for package_name in "${package_names[@]}"; do
+      packages+=("${package_name}")
+    done
   fi
 done < <(grep --invert-match -e "^#" -e "^\s*$" "${BUILD_DIR}/Aptfile")
 
