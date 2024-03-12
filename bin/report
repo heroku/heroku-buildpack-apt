@@ -21,7 +21,7 @@ while IFS= read -r line; do
     # while this is not documented behavior, the Aptfile format technically
     # does allow for multiple packages separated by spaces to be specified
     # on a single line due to how the download command is implemented
-    IFS=' ' read -ra package_names <<< "${line}"
+    IFS=$' \t' read -ra package_names <<< "${line}"
     for package_name in "${package_names[@]}"; do
       packages+=("${package_name}")
     done
