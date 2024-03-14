@@ -5,7 +5,7 @@
 ## 2024-03-14
 
 - Shell hardening ([#115](https://github.com/heroku/heroku-buildpack-apt/pull/115))
-- Handle multi-packages lines when capturing buildpack metadata ([#112](https://github.com/heroku/heroku-buildpack-apt/pull/112))
+- Handle multi-package lines when capturing buildpack metadata ([#112](https://github.com/heroku/heroku-buildpack-apt/pull/112))
 
 ## 2024-03-01
 
