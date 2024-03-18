@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+
+testCompilePackageNames() {
+  compile "package-names"
+  assertCaptured "Updating apt caches"
+  assertCaptured "Fetching .debs for xmlsec1"
+  assertCaptured "Fetching .debs for s3cmd wget"
+  assertCaptured "Fetching .debs for mysql-client-*"
+  assertCaptured "Installing xmlsec1"
+  assertCaptured "Installing s3cmd"
+  assertCaptured "Installing wget"
+  assertCaptured "Installing mysql-client"
+  assertCaptured "Installing mysql-client-core"
+  assertCaptured "Writing profile script"
+  assertCaptured "Rewrite package-config files"
+  assertCapturedSuccess
+}
+
+testReportPackageNames() {
+  report "package-names"
+  assertCaptured "packages: \"mysql-client-*,s3cmd,wget,xmlsec1\""
+  assertNotCaptured "custom_packages"
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileCustomPackageUrl() {
+  if [[ "$STACK" == "heroku-22" ]]; then
+    compile "custom-package-url"
+    assertCaptured "Updating apt caches"
+    assertCaptured "Fetching https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+    assertCaptured "Installing wkhtmltox"
+    assertCaptured "Writing profile script"
+    assertCaptured "Rewrite package-config files"
+    assertCapturedSuccess
+  fi
+}
+
+testReportCustomPackageUrl() {
+  report "custom-package-url"
+  assertNotCaptured "^packages"
+  assertCaptured "custom_packages: \"https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb\""
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileCustomRepository() {
+  if [[ "$STACK" == "heroku-22" ]]; then
+    compile "custom-repository"
+    assertCaptured "Adding custom repositories"
+    assertCaptured "Updating apt caches"
+    assertCaptured "http://us.archive.ubuntu.com/ubuntu jammy/multiverse amd64 Packages"
+    assertCaptured "Fetching .debs for fasttracker2"
+    assertCaptured "Installing fasttracker2"
+    assertCaptured "Writing profile script"
+    assertCaptured "Rewrite package-config files"
+    assertCapturedSuccess
+  fi
+}
+
+testReportCustomRepository() {
+  report "custom-repository"
+  assertCaptured "packages: \"fasttracker2\""
+  assertNotCaptured "custom_packages"
+  assertCaptured "custom_repositories: \"deb http://us.archive.ubuntu.com/ubuntu/ jammy multiverse\""
+  assertCapturedSuccess
+}
+
+testCompileEmpty() {
+  compile "empty"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating apt caches"
+  assertCapturedSuccess
+}
+
+testReportEmpty() {
+  report "empty"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileOnlyComments() {
+  compile "only-comments"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating apt caches"
+  assertCapturedSuccess
+}
+
+testReportOnlyComments() {
+  report "only-comments"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileCustomRepositoryNoPackages() {
+  compile "custom-repository-no-packages"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating apt caches"
+  assertCapturedSuccess
+}
+
+testReportCustomRepositoryNoPackages() {
+  report "custom-repository-no-packages"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertCaptured "custom_repositories: \"deb http://us.archive.ubuntu.com/ubuntu/ jammy multiverse\""
+  assertCapturedSuccess
+}
+
+pushd "$(dirname 0)" >/dev/null || exit 1
+popd >/dev/null || exit 1
+
+source "$(pwd)"/test/utils
+
+compile() {
+  default_process_types_cleanup
+  bp_dir=$(mktmpdir)
+  compile_dir=$(mktmpdir)
+  cp -a "$(pwd)"/* "${bp_dir}"
+  cp -a "${bp_dir}"/test/fixtures/"$1"/. "${compile_dir}"
+  capture "${bp_dir}"/bin/compile "${compile_dir}" "${2:-$(mktmpdir)}" "$3"
+}
+
+report() {
+  default_process_types_cleanup
+  compile_dir=${1:-$(mktmpdir)}
+  cache_dir=${2:-$(mktmpdir)}
+  env_dir=${3:-$(mktmpdir)}
+  bp_dir=$(mktmpdir)
+  cp -a "$(pwd)"/* "${bp_dir}"
+  cp -a "${bp_dir}"/test/fixtures/"$1"/. "${compile_dir}"
+  capture "${bp_dir}"/bin/report "${compile_dir}" "${cache_dir}" "${env_dir}"
+}
+
+mktmpdir() {
+  dir=$(mktemp -t testXXXXX)
+  rm -rf "$dir"
+  mkdir "$dir"
+  echo "$dir"
+}
+
+default_process_types_cleanup() {
+  file="/tmp/default_process_types"
+  if [ -f "$file" ]; then
+    rm "$file"
+  fi
+}
+
+source "$(pwd)"/test/shunit2

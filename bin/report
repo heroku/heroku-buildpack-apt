@@ -26,7 +26,7 @@ while IFS= read -r line; do
       packages+=("${package_name}")
     done
   fi
-done < <(grep --invert-match -e "^#" -e "^\s*$" "${BUILD_DIR}/Aptfile")
+done < <(grep --invert-match -e "^\s*#" -e "^\s*$" "${BUILD_DIR}/Aptfile")
 
 output_key_value() {
   local key value

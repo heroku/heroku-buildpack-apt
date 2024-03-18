@@ -1,0 +1,10 @@
+# single package
+xmlsec1
+
+  # comment with bad indent
+
+# multiple packages on single line
+s3cmd wget
+
+# globbed package
+mysql-client-*
