@@ -78,7 +78,7 @@ APT_OPTIONS=("-o" "debug::nolocking=true" "-o" "dir::cache=$APT_CACHE_DIR" "-o" 
 APT_OPTIONS+=("-o" "dir::etc::sourcelist=$APT_SOURCES" "-o" "dir::etc::sourceparts=/dev/null")
 
 topic "Updating apt caches"
-apt-get "${APT_OPTIONS[@]}" update | indent
+apt-get "${APT_OPTIONS[@]}" update 2>&1 | indent
 
 for PACKAGE in $(cat "$BUILD_DIR/Aptfile" | grep -v -s -e '^#' | grep -v -s -e "^:repo:"); do
   if [[ $PACKAGE == *deb ]]; then
