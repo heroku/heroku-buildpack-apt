@@ -96,7 +96,7 @@ while IFS= read -r PACKAGE; do
     IFS=$' \t' read -ra PACKAGE_NAMES <<< "$PACKAGE"
     apt-get "${APT_OPTIONS[@]}" -y "${APT_FORCE_YES[@]}" -d install --reinstall "${PACKAGE_NAMES[@]}" | indent
   fi
-done < <(grep --invert-match -e "^#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/Aptfile")
+done < <(grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/Aptfile")
 
 mkdir -p "$BUILD_DIR/.apt"
 
