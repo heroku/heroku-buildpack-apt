@@ -78,6 +78,51 @@ testReportCustomRepository() {
   assertCapturedSuccess
 }
 
+testCompileEmpty() {
+  compile "empty"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating apt caches"
+  assertCapturedSuccess
+}
+
+testReportEmpty() {
+  report "empty"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileOnlyComments() {
+  compile "only-comments"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating apt caches"
+  assertCapturedSuccess
+}
+
+testReportOnlyComments() {
+  report "only-comments"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileCustomRepositoryNoPackages() {
+  compile "custom-repository-no-packages"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating apt caches"
+  assertCapturedSuccess
+}
+
+testReportCustomRepositoryNoPackages() {
+  report "custom-repository-no-packages"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertCaptured "custom_repositories: \"deb http://us.archive.ubuntu.com/ubuntu/ jammy multiverse\""
+  assertCapturedSuccess
+}
+
 pushd "$(dirname 0)" >/dev/null || exit 1
 popd >/dev/null || exit 1
 
