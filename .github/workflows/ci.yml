@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  functional-test:
+    runs-on: ubuntu-22.04
+    container:
+      image: heroku/heroku:${{ matrix.stack_number }}-build
+    strategy:
+      matrix:
+        stack_number: ["20", "22"]
+    env:
+      STACK: heroku-${{ matrix.stack_number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Functional tests on heroku:${{ matrix.stack_number }}-build
+        run: test/run
