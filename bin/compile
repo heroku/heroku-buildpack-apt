@@ -94,7 +94,7 @@ for PACKAGE in $(cat $BUILD_DIR/$APT_FILE_MANIFEST | grep -v -s -e '^#' | grep -
     topic "Fetching .debs for $PACKAGE"
     apt-get "${APT_OPTIONS[@]}" -y "${APT_FORCE_YES[@]}" -d install --reinstall "$PACKAGE" | indent
   fi
-done
+done < <(grep --invert-match -e "^#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/Aptfile")
 
 mkdir -p "$BUILD_DIR/.apt"
 
