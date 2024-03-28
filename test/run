@@ -4,8 +4,11 @@ testCompilePackageNames() {
   compile "package-names"
   assertCaptured "Updating apt caches"
   assertCaptured "Fetching .debs for xmlsec1"
+  assertCaptured "Fetching .debs for s3cmd wget"
   assertCaptured "Fetching .debs for mysql-client-*"
   assertCaptured "Installing xmlsec1"
+  assertCaptured "Installing s3cmd"
+  assertCaptured "Installing wget"
   assertCaptured "Installing mysql-client"
   assertCaptured "Installing mysql-client-core"
   assertCaptured "Writing profile script"
@@ -15,7 +18,7 @@ testCompilePackageNames() {
 
 testReportPackageNames() {
   report "package-names"
-  assertCaptured "packages: \"mysql-client-*,xmlsec1\""
+  assertCaptured "packages: \"mysql-client-*,s3cmd,wget,xmlsec1\""
   assertNotCaptured "custom_packages"
   assertNotCaptured "custom_repositories"
   assertCapturedSuccess

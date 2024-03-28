@@ -92,7 +92,12 @@ for PACKAGE in $(cat $BUILD_DIR/$APT_FILE_MANIFEST | grep -v -s -e '^#' | grep -
     curl --silent --show-error --fail -L -z "$PACKAGE_FILE" -o "$PACKAGE_FILE" "$PACKAGE" 2>&1 | indent
   else
     topic "Fetching .debs for $PACKAGE"
-    apt-get "${APT_OPTIONS[@]}" -y "${APT_FORCE_YES[@]}" -d install --reinstall "$PACKAGE" | indent
+    # while this is not documented behavior, the Aptfile format technically
+    # did allow for multiple packages separated by spaces to be specified
+    # on a single line due to how the download command was implemented so we
+    # should respect that behavior since users are doing this
+    IFS=$' \t' read -ra PACKAGE_NAMES <<< "$PACKAGE"
+    apt-get "${APT_OPTIONS[@]}" -y "${APT_FORCE_YES[@]}" -d install --reinstall "${PACKAGE_NAMES[@]}" | indent
   fi
 done < <(grep --invert-match -e "^#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/Aptfile")
 
