@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Warn when Aptfile contains no packages ([#126](https://github.com/heroku/heroku-buildpack-apt/pull/126))
+
 ## 2024-03-14
 
 - Shell hardening ([#115](https://github.com/heroku/heroku-buildpack-apt/pull/115))

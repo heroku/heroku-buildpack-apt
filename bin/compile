@@ -31,6 +31,16 @@ function indent() {
   esac
 }
 
+if ! grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" -q "${BUILD_DIR}/Aptfile"; then
+  echo "
+!       You have no packages listed in your Aptfile. If you don't need custom Apt packages,
+!       delete your Aptfile and remove the buildpack with:
+!
+!       $ heroku buildpacks:remove heroku-community/apt
+"
+  exit 0
+fi
+
 # Store which STACK we are running on in the cache to bust the cache if it changes
 if [[ -f "$CACHE_DIR/.apt/STACK" ]]; then
   CACHED_STACK=$(cat "$CACHE_DIR/.apt/STACK")
