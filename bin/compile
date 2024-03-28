@@ -69,7 +69,7 @@ else
   # like>>    :repo:deb http://cz.archive.ubuntu.com/ubuntu artful main universe
   if grep -q -e "^:repo:" "$BUILD_DIR/Aptfile"; then
     topic "Adding custom repositories"
-    cat "$BUILD_DIR/Aptfile" | grep -s -e "^:repo:" | sed 's/^:repo:\(.*\)\s*$/\1/g' >> "$APT_SOURCES"
+    grep -s -e "^:repo:" "$BUILD_DIR/Aptfile" | sed 's/^:repo:\(.*\)\s*$/\1/g' >> "$APT_SOURCES"
   fi
 fi
 
@@ -80,7 +80,7 @@ APT_OPTIONS+=("-o" "dir::etc::sourcelist=$APT_SOURCES" "-o" "dir::etc::sourcepar
 topic "Updating apt caches"
 apt-get "${APT_OPTIONS[@]}" update 2>&1 | indent
 
-for PACKAGE in $(cat "$BUILD_DIR/Aptfile" | grep -v -s -e '^#' | grep -v -s -e "^:repo:"); do
+while IFS= read -r PACKAGE; do
   if [[ $PACKAGE == *deb ]]; then
     PACKAGE_NAME=$(basename "$PACKAGE" .deb)
     PACKAGE_FILE=$APT_CACHE_DIR/archives/$PACKAGE_NAME.deb
@@ -91,7 +91,7 @@ for PACKAGE in $(cat "$BUILD_DIR/Aptfile" | grep -v -s -e '^#' | grep -v -s -e "
     topic "Fetching .debs for $PACKAGE"
     apt-get "${APT_OPTIONS[@]}" -y "${APT_FORCE_YES[@]}" -d install --reinstall "$PACKAGE" | indent
   fi
-done
+done < <(grep --invert-match -e "^#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/Aptfile")
 
 mkdir -p "$BUILD_DIR/.apt"
 
