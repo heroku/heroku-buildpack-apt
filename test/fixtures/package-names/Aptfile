@@ -6,3 +6,5 @@ mysql-client-*
 
 # multiple packages on single line
 s3cmd wget
+
+  # comment with bad indent
