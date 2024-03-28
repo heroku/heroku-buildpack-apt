@@ -10,6 +10,7 @@ testCompilePackageNames() {
   assertCaptured "Installing mysql-client-core"
   assertCaptured "Writing profile script"
   assertCaptured "Rewrite package-config files"
+  assertCapturedSuccess
 }
 
 testReportPackageNames() {
@@ -31,6 +32,7 @@ testCompileCustomPackageUrl() {
   assertCaptured "Installing wkhtmltox"
   assertCaptured "Writing profile script"
   assertCaptured "Rewrite package-config files"
+  assertCapturedSuccess
 }
 
 testReportCustomPackageUrl() {
@@ -42,6 +44,7 @@ testReportCustomPackageUrl() {
   assertNotCaptured "^packages"
   assertCaptured "custom_packages: \"${download_urls[$STACK]}\""
   assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
 }
 
 testCompileCustomRepository() {
@@ -57,6 +60,7 @@ testCompileCustomRepository() {
   assertCaptured "Installing fasttracker2"
   assertCaptured "Writing profile script"
   assertCaptured "Rewrite package-config files"
+  assertCapturedSuccess
 }
 
 testReportCustomRepository() {
@@ -68,6 +72,7 @@ testReportCustomRepository() {
   assertCaptured "packages: \"fasttracker2\""
   assertNotCaptured "custom_packages"
   assertCaptured "custom_repositories: \"deb http://us.archive.ubuntu.com/ubuntu/ ${ubuntu_release_names[$STACK]} multiverse\""
+  assertCapturedSuccess
 }
 
 pushd "$(dirname 0)" >/dev/null || exit 1
