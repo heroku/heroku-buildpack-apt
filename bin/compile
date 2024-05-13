@@ -31,12 +31,10 @@ function indent() {
   esac
 }
 
-if ! grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" -q "${BUILD_DIR}/Aptfile"; then
+if ! grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" -q "${BUILD_DIR}/${APT_FILE_MANIFEST}"; then
   echo "
-!       You have no packages listed in your Aptfile. If you don't need custom Apt packages,
-!       delete your Aptfile and remove the buildpack with:
-!
-!       $ heroku buildpacks:remove heroku-community/apt
+!       You have no packages listed in your ${APT_FILE_MANIFEST}. If you don't need custom Apt packages,
+!       delete your ${APT_FILE_MANIFEST} and remove the apt-buildpack from your .buildpacks file.
 "
   exit 0
 fi
@@ -123,9 +121,9 @@ done
 topic "Writing profile script"
 mkdir -p "$BUILD_DIR/.profile.d"
 cat <<EOF >"$BUILD_DIR/.profile.d/000_apt.sh"
-export PATH="\$HOME/.apt/usr/bin:\$PATH"
-export LD_LIBRARY_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/usr/lib:\$LD_LIBRARY_PATH"
-export LIBRARY_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/usr/lib:\$LIBRARY_PATH"
+export PATH="\$HOME/.apt/usr/bin:\$HOME/.apt/usr/sbin:\$PATH"
+export LD_LIBRARY_PATH="\$HOME/.apt/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/lib:\$HOME/.apt/usr/lib:\$LD_LIBRARY_PATH"
+export LIBRARY_PATH="\$HOME/.apt/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/lib:\$HOME/.apt/usr/lib:\$LIBRARY_PATH"
 export INCLUDE_PATH="\$HOME/.apt/usr/include:\$HOME/.apt/usr/include/x86_64-linux-gnu:\$INCLUDE_PATH"
 export CPATH="\$INCLUDE_PATH"
 export CPPPATH="\$INCLUDE_PATH"
