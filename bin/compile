@@ -10,9 +10,10 @@ if [ "$BUILDPACK_DEBUG" = "true" ] ; then
 fi
 
 # parse and derive params
-BUILD_DIR=$1
-CACHE_DIR=$2
-LP_DIR=$(cd "$(dirname "$0")"; cd ..; pwd)
+BUILD_DIR="${1:-}"
+CACHE_DIR="${2:-}"
+LP_DIR="$( cd "$( dirname "$0" )"; cd ..; pwd )"
+
 
 function error() {
   echo " !     $*" >&2
@@ -30,6 +31,16 @@ function indent() {
     *)      sed -u "$c";;
   esac
 }
+
+
+APT_CACHE_DIR="${CACHE_DIR}/apt/cache"
+APT_STATE_DIR="${CACHE_DIR}/apt/state"
+APT_SOURCELIST_DIR="${CACHE_DIR}/apt/sources"   # place custom sources.list here
+APT_SOURCEPARTS_DIR="${APT_SOURCELIST_DIR}/sources.list.d"
+
+APT_SOURCES="${APT_SOURCELIST_DIR}/sources.list"
+APT_FILE_MANIFEST="${APT_FILE_MANIFEST:-Aptfile}"
+
 
 if ! grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" -q "${BUILD_DIR}/${APT_FILE_MANIFEST}"; then
   echo "
@@ -50,13 +61,6 @@ fi
 mkdir -p "$CACHE_DIR/.apt"
 echo "$STACK" > "$CACHE_DIR/.apt/STACK"
 
-APT_CACHE_DIR="$CACHE_DIR/apt/cache"
-APT_STATE_DIR="$CACHE_DIR/apt/state"
-APT_SOURCELIST_DIR="$CACHE_DIR/apt/sources"   # place custom sources.list here
-APT_SOURCEPARTS_DIR="$APT_SOURCELIST_DIR/sources.list.d"
-
-APT_SOURCES="$APT_SOURCELIST_DIR/sources.list"
-APT_FILE_MANIFEST="${APT_FILE_MANIFEST:-Aptfile}"
 
 APT_VERSION=$(apt-get -v | awk 'NR == 1{ print $2 }')
 
@@ -109,7 +113,7 @@ for PACKAGE in $(cat $BUILD_DIR/$APT_FILE_MANIFEST | grep -v -s -e '^#' | grep -
     IFS=$' \t' read -ra PACKAGE_NAMES <<< "$PACKAGE"
     apt-get "${APT_OPTIONS[@]}" -y "${APT_FORCE_YES[@]}" -d install --reinstall "${PACKAGE_NAMES[@]}" | indent
   fi
-done < <(grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/Aptfile")
+done < <(grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/${APT_FILE_MANIFEST}")
 
 mkdir -p "$BUILD_DIR/.apt"
 
