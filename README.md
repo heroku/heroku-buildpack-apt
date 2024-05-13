@@ -13,7 +13,6 @@ Include a list of apt package names to be installed in a file named `Aptfile`.
 To find out what packages are available, see:
 <https://packages.ubuntu.com>
 
-<<<<<<< HEAD
 See the [Scalingo stacks](https://doc.scalingo.com/platform/internals/stacks/stacks) documentation for which Ubuntu LTS version is used by each stack.
 
 #### Setup
