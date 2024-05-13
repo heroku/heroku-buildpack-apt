@@ -13,6 +13,7 @@ Include a list of apt package names to be installed in a file named `Aptfile`.
 To find out what packages are available, see:
 <https://packages.ubuntu.com>
 
+<<<<<<< HEAD
 See the [Scalingo stacks](https://doc.scalingo.com/platform/internals/stacks/stacks) documentation for which Ubuntu LTS version is used by each stack.
 
 #### Setup
@@ -37,27 +38,13 @@ Note that the order of the buildpacks in the `.buildpacks` file matters.
 #### Aptfile
 
     # you can list packages
-    libpq-dev
-
+    libexample-dev
+    
     # or include links to specific .deb files
-    http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-precise-amd64.deb
-
+    https://downloads.example.com/example.deb
+    
     # or add custom apt repos (only required if using packages outside of the standard Ubuntu APT repositories)
-    :repo:deb http://cz.archive.ubuntu.com/ubuntu artful main universe
-
-#### Gemfile
-
-    source "https://rubygems.org"
-    gem "pg"
-
-### Check out the PG library version
-
-    $ scalingo run bash -a apt-pg-test
-    ~ $ irb
-	irb(main):001:0> require "pg"
-	=> true
-	irb(main):002:0> PG::version_string
-	=> "PG 0.15.1"
+    :repo:deb https://apt.example.com/ example-distro main
 
 ## License
 
