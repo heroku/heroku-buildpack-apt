@@ -109,7 +109,7 @@ for PACKAGE in $(cat $BUILD_DIR/$APT_FILE_MANIFEST | grep -v -s -e '^#' | grep -
     IFS=$' \t' read -ra PACKAGE_NAMES <<< "$PACKAGE"
     apt-get "${APT_OPTIONS[@]}" -y "${APT_FORCE_YES[@]}" -d install --reinstall "${PACKAGE_NAMES[@]}" | indent
   fi
-done < <(grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/Aptfile")
+done < <(grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" "${BUILD_DIR}/${APT_FILE_MANIFEST}")
 
 mkdir -p "$BUILD_DIR/.apt"
 
