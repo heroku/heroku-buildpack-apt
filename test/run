@@ -2,7 +2,7 @@
 
 testCompilePackageNames() {
   compile "package-names"
-  assertCaptured "Updating apt caches"
+  assertCaptured "Updating APT package index"
   assertCaptured "Fetching .debs for xmlsec1"
   assertCaptured "Fetching .debs for s3cmd wget"
   assertCaptured "Fetching .debs for mysql-client-*"
@@ -13,6 +13,32 @@ testCompilePackageNames() {
   assertCaptured "Installing mysql-client-core"
   assertCaptured "Writing profile script"
   assertCaptured "Rewrite package-config files"
+  assertCapturedSuccess
+}
+
+testCacheInvalidation() {
+  cache_dir=$(mktmpdir)
+
+  # Cold cache
+  compile "package-names" "${cache_dir}"
+  assertCaptured "Detected Aptfile or Stack changes, flushing cache"
+  assertCapturedSuccess
+
+  # Warm cache
+  compile "package-names" "${cache_dir}"
+  assertCaptured "Reusing cache"
+  assertCapturedSuccess
+
+  # Cache invalidated on stack change
+  echo 'some-old-stack' > "${cache_dir}/.apt/STACK"
+  compile "package-names" "${cache_dir}"
+  assertCaptured "Detected Aptfile or Stack changes, flushing cache"
+  assertCapturedSuccess
+
+  # Cache invalidated if stack version file missing (eg cache from old buildpack version)
+  rm "${cache_dir}/.apt/STACK"
+  compile "package-names" "${cache_dir}"
+  assertCaptured "Detected Aptfile or Stack changes, flushing cache"
   assertCapturedSuccess
 }
 
@@ -32,7 +58,7 @@ testCompileCustomPackageUrl() {
     [heroku-24]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
   )
   compile "custom-package-url-$STACK"
-  assertCaptured "Updating apt caches"
+  assertCaptured "Updating APT package index"
   assertCaptured "Fetching ${download_urls[$STACK]}"
   assertCaptured "Installing wkhtmltox"
   assertCaptured "Writing profile script"
@@ -62,7 +88,7 @@ testCompileCustomRepository() {
   )
   compile "custom-repository-$STACK"
   assertCaptured "Adding custom repositories"
-  assertCaptured "Updating apt caches"
+  assertCaptured "Updating APT package index"
   assertCaptured "http://us.archive.ubuntu.com/ubuntu ${ubuntu_release_names[$STACK]}/multiverse amd64 Packages"
   assertCaptured "Fetching .debs for fasttracker2"
   assertCaptured "Installing fasttracker2"
@@ -87,7 +113,7 @@ testReportCustomRepository() {
 testCompileEmpty() {
   compile "empty"
   assertCaptured "You have no packages listed in your Aptfile"
-  assertNotCaptured "Updating apt caches"
+  assertNotCaptured "Updating APT package index"
   assertCapturedSuccess
 }
 
@@ -102,7 +128,7 @@ testReportEmpty() {
 testCompileOnlyComments() {
   compile "only-comments"
   assertCaptured "You have no packages listed in your Aptfile"
-  assertNotCaptured "Updating apt caches"
+  assertNotCaptured "Updating APT package index"
   assertCapturedSuccess
 }
 
@@ -117,7 +143,7 @@ testReportOnlyComments() {
 testCompileCustomRepositoryNoPackages() {
   compile "custom-repository-no-packages"
   assertCaptured "You have no packages listed in your Aptfile"
-  assertNotCaptured "Updating apt caches"
+  assertNotCaptured "Updating APT package index"
   assertCapturedSuccess
 }
 
