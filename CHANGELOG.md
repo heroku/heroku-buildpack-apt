@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The cache is now correctly invalidated if the stack version of an existing cache cannot be determined. ([#133](https://github.com/heroku/heroku-buildpack-apt/pull/133))
+- When the cache is invalidated, all APT-related files are now removed, rather than only some of them. In particular, this means old APT package index files are cleaned up. ([#133](https://github.com/heroku/heroku-buildpack-apt/pull/133))
+
 ## 2024-03-28
 
 - Warn when Aptfile contains no packages ([#126](https://github.com/heroku/heroku-buildpack-apt/pull/126))

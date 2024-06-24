@@ -31,7 +31,7 @@ function indent() {
 
 if ! grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" -q "${BUILD_DIR}/Aptfile"; then
   echo "
-!       You have no packages listed in your Aptfile. If you don't need custom Apt packages,
+!       You have no packages listed in your Aptfile. If you don't need custom APT packages,
 !       delete your Aptfile and remove the buildpack with:
 !
 !       $ heroku buildpacks:remove heroku-community/apt
@@ -40,15 +40,20 @@ if ! grep --invert-match -e "^\s*#" -e "^\s*$" -e "^:repo:" -q "${BUILD_DIR}/Apt
 fi
 
 # Store which STACK we are running on in the cache to bust the cache if it changes
-if [[ -f "$CACHE_DIR/.apt/STACK" ]]; then
-  CACHED_STACK=$(cat "$CACHE_DIR/.apt/STACK")
+# This file really should be inside "${CACHE_DIR}/apt" not "${CACHE_DIR}/.apt", however, this
+# buildpack has used the wrong directory name for it for some time, so there are many APT-related
+# forks that use this path, so for backwards compatibility we're not changing the path, so as to
+# not affect apps that have multiple APT-using buildpacks active at the same time.
+STACK_VERSION_FILE="${CACHE_DIR}/.apt/STACK"
+if [[ -f "${STACK_VERSION_FILE}" ]]; then
+  CACHED_STACK=$(cat "${STACK_VERSION_FILE}")
 else
-  CACHED_STACK=$STACK
+  CACHED_STACK=
 fi
 
 # Ensure we store the STACK in the cache for next time.
-mkdir -p "$CACHE_DIR/.apt"
-echo "$STACK" > "$CACHE_DIR/.apt/STACK"
+mkdir -p "${CACHE_DIR}/.apt"
+echo "${STACK}" > "${STACK_VERSION_FILE}"
 
 APT_CACHE_DIR="$CACHE_DIR/apt/cache"
 APT_STATE_DIR="$CACHE_DIR/apt/state"
@@ -70,7 +75,7 @@ if [[ -f "$APT_CACHE_DIR/Aptfile" ]] && cmp -s "$BUILD_DIR/Aptfile" "$APT_CACHE_
 else
   # Aptfile changed or does not exist or STACK changed
   topic "Detected Aptfile or Stack changes, flushing cache"
-  rm -rf "$APT_CACHE_DIR"
+  rm -rf "${CACHE_DIR}/apt"
   mkdir -p "$APT_CACHE_DIR/archives/partial"
   mkdir -p "$APT_STATE_DIR/lists/partial"
   mkdir -p "$APT_SOURCELIST_DIR"   # make dir for sources
@@ -89,7 +94,7 @@ APT_OPTIONS=("-o" "debug::nolocking=true" "-o" "dir::cache=$APT_CACHE_DIR" "-o" 
 # Override the use of /etc/apt/sources.list (sourcelist) and /etc/apt/sources.list.d/* (sourceparts).
 APT_OPTIONS+=("-o" "dir::etc::sourcelist=$APT_SOURCES" "-o" "dir::etc::sourceparts=$APT_SOURCEPARTS_DIR")
 
-topic "Updating apt caches"
+topic "Updating APT package index"
 apt-get "${APT_OPTIONS[@]}" update 2>&1 | indent
 
 while IFS= read -r PACKAGE; do
