@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# bin/report <build-dir> <cache-dir> <env-dir>
+
+### Configure environment
+
+set -o errexit    # always exit on error
+set -o pipefail   # don't ignore exit codes when piping output
+
+BUILD_DIR=${1:-}
+
+packages=()
+custom_packages=()
+custom_repositories=()
+
+while IFS= read -r line; do
+  if grep --silent -e "^:repo:" <<< "${line}"; then
+    custom_repositories+=("${line//:repo:/}")
+  elif [[ $line == *deb ]]; then
+    custom_packages+=("${line}")
+  else
+    IFS=$' \t' read -ra package_names <<< "${line}"
+    for package_name in "${package_names[@]}"; do
+      packages+=("${package_name}")
+    done
+  fi
+done < <(grep --invert-match -e "^\s*#" -e "^\s*$" "${BUILD_DIR}/Aptfile")
+
+output_key_value() {
+  local key value
+  key="$1"
+  shift
+  # sort & join the array values with a ',' then escape both '\' and '"' characters
+  value=$(printf '%s\n' "$@" | sort | tr '\n' ',' | sed 's/,$/\n/' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
+  if [[ -n "${value}" ]]; then
+    echo "$key: \"$value\""
+  fi
+}
+
+output_key_value "packages" "${packages[@]}"
+output_key_value "custom_packages" "${custom_packages[@]}"
+output_key_value "custom_repositories" "${custom_repositories[@]}"

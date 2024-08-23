@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+
+testCompilePackageNames() {
+  compile "package-names"
+  assertCaptured "Updating APT package index"
+  assertCaptured "Fetching .debs for xmlsec1"
+  assertCaptured "Fetching .debs for s3cmd wget"
+  assertCaptured "Fetching .debs for mysql-client-*"
+  assertCaptured "Installing xmlsec1"
+  assertCaptured "Installing s3cmd"
+  assertCaptured "Installing wget"
+  assertCaptured "Installing mysql-client"
+  assertCaptured "Installing mysql-client-core"
+  assertCaptured "Writing profile script"
+  assertCaptured "Rewrite package-config files"
+  assertCapturedSuccess
+}
+
+testCacheInvalidation() {
+  cache_dir=$(mktmpdir)
+
+  # Cold cache
+  compile "package-names" "${cache_dir}"
+  assertCaptured "Detected Aptfile or Stack changes, flushing cache"
+  assertCapturedSuccess
+
+  # Warm cache
+  compile "package-names" "${cache_dir}"
+  assertCaptured "Reusing cache"
+  assertCapturedSuccess
+
+  # Cache invalidated on stack change
+  echo 'some-old-stack' > "${cache_dir}/.apt/STACK"
+  compile "package-names" "${cache_dir}"
+  assertCaptured "Detected Aptfile or Stack changes, flushing cache"
+  assertCapturedSuccess
+
+  # Cache invalidated if stack version file missing (eg cache from old buildpack version)
+  rm "${cache_dir}/.apt/STACK"
+  compile "package-names" "${cache_dir}"
+  assertCaptured "Detected Aptfile or Stack changes, flushing cache"
+  assertCapturedSuccess
+}
+
+testReportPackageNames() {
+  report "package-names"
+  assertCaptured "packages: \"mysql-client-*,s3cmd,wget,xmlsec1\""
+  assertNotCaptured "custom_packages"
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileCustomPackageUrl() {
+  declare -A download_urls=(
+    [heroku-20]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb"
+    [heroku-22]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+    # no noble package for wkhtmltopdf yet, so using jammy package
+    [heroku-24]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+  )
+  compile "custom-package-url-$STACK"
+  assertCaptured "Updating APT package index"
+  assertCaptured "Fetching ${download_urls[$STACK]}"
+  assertCaptured "Installing wkhtmltox"
+  assertCaptured "Writing profile script"
+  assertCaptured "Rewrite package-config files"
+  assertCapturedSuccess
+}
+
+testReportCustomPackageUrl() {
+  declare -A download_urls=(
+    [heroku-20]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb"
+    [heroku-22]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+    # no noble package for wkhtmltopdf yet, so using jammy package
+    [heroku-24]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+  )
+  report "custom-package-url-$STACK"
+  assertNotCaptured "^packages"
+  assertCaptured "custom_packages: \"${download_urls[$STACK]}\""
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileCustomRepository() {
+  declare -A ubuntu_release_names=(
+    [heroku-20]="focal"
+    [heroku-22]="jammy"
+    [heroku-24]="noble"
+  )
+  compile "custom-repository-$STACK"
+  assertCaptured "Adding custom repositories"
+  assertCaptured "Updating APT package index"
+  assertCaptured "http://us.archive.ubuntu.com/ubuntu ${ubuntu_release_names[$STACK]}/multiverse amd64 Packages"
+  assertCaptured "Fetching .debs for fasttracker2"
+  assertCaptured "Installing fasttracker2"
+  assertCaptured "Writing profile script"
+  assertCaptured "Rewrite package-config files"
+  assertCapturedSuccess
+}
+
+testReportCustomRepository() {
+  declare -A ubuntu_release_names=(
+      [heroku-20]="focal"
+      [heroku-22]="jammy"
+      [heroku-24]="noble"
+    )
+  report "custom-repository-$STACK"
+  assertCaptured "packages: \"fasttracker2\""
+  assertNotCaptured "custom_packages"
+  assertCaptured "custom_repositories: \"deb http://us.archive.ubuntu.com/ubuntu/ ${ubuntu_release_names[$STACK]} multiverse\""
+  assertCapturedSuccess
+}
+
+testCompileEmpty() {
+  compile "empty"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating APT package index"
+  assertCapturedSuccess
+}
+
+testReportEmpty() {
+  report "empty"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileOnlyComments() {
+  compile "only-comments"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating APT package index"
+  assertCapturedSuccess
+}
+
+testReportOnlyComments() {
+  report "only-comments"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertNotCaptured "custom_repositories"
+  assertCapturedSuccess
+}
+
+testCompileCustomRepositoryNoPackages() {
+  compile "custom-repository-no-packages"
+  assertCaptured "You have no packages listed in your Aptfile"
+  assertNotCaptured "Updating APT package index"
+  assertCapturedSuccess
+}
+
+testReportCustomRepositoryNoPackages() {
+  report "custom-repository-no-packages"
+  assertNotCaptured "^packages"
+  assertNotCaptured "custom_packages"
+  assertCaptured "custom_repositories: \"deb http://us.archive.ubuntu.com/ubuntu/ jammy multiverse\""
+  assertCapturedSuccess
+}
+
+pushd "$(dirname 0)" >/dev/null || exit 1
+popd >/dev/null || exit 1
+
+source "$(pwd)"/test/utils
+
+compile() {
+  default_process_types_cleanup
+  bp_dir=$(mktmpdir)
+  compile_dir=$(mktmpdir)
+  cp -a "$(pwd)"/* "${bp_dir}"
+  cp -a "${bp_dir}"/test/fixtures/"$1"/. "${compile_dir}"
+  capture "${bp_dir}"/bin/compile "${compile_dir}" "${2:-$(mktmpdir)}" "$3"
+}
+
+report() {
+  default_process_types_cleanup
+  compile_dir=${1:-$(mktmpdir)}
+  cache_dir=${2:-$(mktmpdir)}
+  env_dir=${3:-$(mktmpdir)}
+  bp_dir=$(mktmpdir)
+  cp -a "$(pwd)"/* "${bp_dir}"
+  cp -a "${bp_dir}"/test/fixtures/"$1"/. "${compile_dir}"
+  capture "${bp_dir}"/bin/report "${compile_dir}" "${cache_dir}" "${env_dir}"
+}
+
+mktmpdir() {
+  dir=$(mktemp -t testXXXXX)
+  rm -rf "$dir"
+  mkdir "$dir"
+  echo "$dir"
+}
+
+default_process_types_cleanup() {
+  file="/tmp/default_process_types"
+  if [ -f "$file" ]; then
+    rm "$file"
+  fi
+}
+
+source "$(pwd)"/test/shunit2

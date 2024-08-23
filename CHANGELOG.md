@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 2024-06-24
+
+- The cache is now correctly invalidated if the stack version of an existing cache cannot be determined. ([#133](https://github.com/heroku/heroku-buildpack-apt/pull/133))
+- When the cache is invalidated, all APT-related files are now removed, rather than only some of them. In particular, this means old APT package index files are cleaned up. ([#133](https://github.com/heroku/heroku-buildpack-apt/pull/133))
+- Exclude test/development files from the buildpack archive published to the buildpack registry. ([#135](https://github.com/heroku/heroku-buildpack-apt/pull/135))
+
+## 2024-03-28
+
+- Warn when Aptfile contains no packages ([#126](https://github.com/heroku/heroku-buildpack-apt/pull/126))
+- Support sources parts directory for Heroku-24 compatibility ([#119](https://github.com/heroku/heroku-buildpack-apt/pull/119))
+
+## 2024-03-14
+
+- Shell hardening ([#115](https://github.com/heroku/heroku-buildpack-apt/pull/115))
+- Handle multi-package lines when capturing buildpack metadata ([#112](https://github.com/heroku/heroku-buildpack-apt/pull/112))
+
+## 2024-03-01
+
+- Add `bin/report` script to capture buildpack metadata ([#110](https://github.com/heroku/heroku-buildpack-apt/pull/110))
 
 ## 2021-03-10
 
