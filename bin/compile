@@ -144,15 +144,14 @@ export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUIL
 
 # borrowed from heroku-geo-buildpack
 
-PROFILE_PATH="$BUILD_DIR/.profile.d/geo.sh"
-mkdir -p "$(dirname "$PROFILE_PATH")"
+PROFILE_PATH="$BUILD_DIR/.profile.d/000_apt.sh"
 
 # Export vars
 # shellcheck disable=SC2016
 {
   echo 'export GDAL_LIBRARY_PATH="$HOME/.apt/usr/lib/x86_64-linux-gnu/libgdal.so.35"'
   echo 'export GEOS_LIBRARY_PATH="$HOME/.apt/usr/lib/x86_64-linux-gnu/libgeos_c.so.1"'
-  echo 'export PROJ4_LIBRARY_PATH="$HOME/.apt/usr/lib/x86_64-linux-gnu/libproj.so"'
+  echo 'export PROJ4_LIBRARY_PATH="$HOME/.apt/usr/lib/x86_64-linux-gnu/libproj.so.25"'
   echo 'export GDAL_DATA="$HOME/.apt/usr/share/gdal"'
   echo 'export LIBRARY_PATH="$HOME/.apt/usr/lib:$HOME/.apt/usr/lib/x86_64-linux-gnu:$LIBRARY_PATH"'
   echo 'export LD_LIBRARY_PATH="$HOME/.apt/usr/lib::$HOME/.apt/usr/lib/x86_64-linux-gnu/$LD_LIBRARY_PATH"'
@@ -166,7 +165,7 @@ export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPP
 {
   echo "export GDAL_LIBRARY_PATH=\"$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/libgdal.so.35\""
   echo "export GEOS_LIBRARY_PATH=\"$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/libgeos_c.so.1\""
-  echo "export PROJ4_LIBRARY_PATH=\"$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/libproj.so\""
+  echo "export PROJ4_LIBRARY_PATH=\"$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/libproj.so.25\""
   echo "export GDAL_DATA=\"$BUILD_DIR/.apt/usr/share/gdal\""
   echo "export CPLUS_INCLUDE_PATH=\"$BUILD_DIR/.apt/usr/include/gdal:\$CPLUS_INCLUDE_PATH\""
   echo "export C_INCLUDE_PATH=\"$BUILD_DIR/.apt/usr/include/gdal:\$C_INCLUDE_PATH\""
