@@ -1,0 +1,10 @@
+[buildpack]
+name = "Apt"
+
+[publish.Ignore]
+files = [
+  ".github/",
+  "test/",
+  ".gitignore",
+  "Makefile",
+]
