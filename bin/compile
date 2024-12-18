@@ -134,6 +134,26 @@ export CPPPATH="\$INCLUDE_PATH"
 export PKG_CONFIG_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/i386-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/pkgconfig:\$PKG_CONFIG_PATH"
 EOF
 
+# post-installation logic for git
+# check is git is in the Aptfile and set GIT_EXEC_PATH 
+if grep -qw "git" "${BUILD_DIR}/Aptfile"; then
+  if command -v git >/dev/null 2>&1; then
+    topic "Git installed successfully.  Verifying GIT_EXEC_PATH."
+
+    GIT_CORE_DIR="${BUILD_DIR}/.apt/usr/lib/git-core"
+    # if [[ -d "$GIT_CORE_DIR" && "$(ls -A "GIT_CORE_DIR")" ]]; then
+    if [[ -d "$GIT_CORE_DIR" ]]; then
+      topic "Setting GIT_EXEC_PATH to $GIT_CORE_DIR"
+      echo "export GIT_EXEC_PATH=$HOME/.apt/usr/lib/git-core" >> "$BUILD_DIR/.profile.d/000_apt.sh"
+      export GIT_EXEC_PATH=$GIT_CORE_DIR
+    else
+      topic "Git core directory $GIT_CORE_DIR is either missing or empty.  Skipping GIT_EXEC_PATH setup."
+    fi
+  else
+    error "Git installation failed.  Check Aptfile and logs."
+  fi 
+fi
+
 export PATH="$BUILD_DIR/.apt/usr/bin:$PATH"
 export LD_LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu:$BUILD_DIR/.apt/usr/lib:$LD_LIBRARY_PATH"
 export LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu:$BUILD_DIR/.apt/usr/lib:$LIBRARY_PATH"
