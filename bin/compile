@@ -159,6 +159,7 @@ if grep -qw "git" "${BUILD_DIR}/Aptfile"; then
     if [[ -d "$GIT_CORE_DIR" ]]; then
       topic "Setting GIT_EXEC_PATH to $GIT_CORE_DIR"
       # set env var in runtime profile script
+      # shellcheck disable=SC2016
       echo 'export GIT_EXEC_PATH="$HOME/.apt/usr/lib/git-core"' >> "$RUNTIME_PROFILE_SCRIPT"
       # export the env var within the build
       export GIT_EXEC_PATH=$GIT_CORE_DIR
