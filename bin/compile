@@ -153,22 +153,18 @@ find "$BUILD_DIR/.apt" -type f -ipath '*/pkgconfig/*.pc' -print0 | xargs -0 --no
 
 # post-installation logic for git
 # check is git is in the Aptfile and set GIT_EXEC_PATH
-if grep -qw "git" "${BUILD_DIR}/Aptfile"; then
-  if command -v git >/dev/null 2>&1; then
-    GIT_CORE_DIR="${BUILD_DIR}/.apt/usr/lib/git-core"
-    if [[ -d "$GIT_CORE_DIR" ]]; then
-      topic "Setting GIT_EXEC_PATH to $GIT_CORE_DIR"
-      # set env var in runtime profile script
-      # shellcheck disable=SC2016
-      echo 'export GIT_EXEC_PATH="$HOME/.apt/usr/lib/git-core"' >> "$RUNTIME_PROFILE_SCRIPT"
-      # export the env var within the build
-      export GIT_EXEC_PATH=$GIT_CORE_DIR
-      # export the env var to later buildpacks
-      export | grep -E -e ' (GIT_EXEC_PATH)=' >> "$BUILDPACK_EXPORT_FILE"
-    else
-      topic "Git core directory $GIT_CORE_DIR is either missing or empty. Skipping GIT_EXEC_PATH setup."
-    fi
+if [[ -f "${BUILD_DIR}/.apt/usr/bin/git" ]]; then
+  GIT_CORE_DIR="${BUILD_DIR}/.apt/usr/lib/git-core"
+  if [[ -d "$GIT_CORE_DIR" ]]; then
+    topic "Setting GIT_EXEC_PATH to $GIT_CORE_DIR"
+    # set env var in runtime profile script
+    # shellcheck disable=SC2016
+    echo 'export GIT_EXEC_PATH="$HOME/.apt/usr/lib/git-core"' >> "$RUNTIME_PROFILE_SCRIPT"
+    # export the env var within the build
+    export GIT_EXEC_PATH=$GIT_CORE_DIR
+    # export the env var to later buildpacks
+    export | grep -E -e ' (GIT_EXEC_PATH)=' >> "$BUILDPACK_EXPORT_FILE"
   else
-    error "Git installation failed. Check Aptfile and logs."
+    topic "Git core directory $GIT_CORE_DIR is either missing or empty. Skipping GIT_EXEC_PATH setup."
   fi
 fi
