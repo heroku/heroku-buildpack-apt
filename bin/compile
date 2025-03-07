@@ -152,7 +152,8 @@ topic "Rewrite package-config files"
 find "$BUILD_DIR/.apt" -type f -ipath '*/pkgconfig/*.pc' -print0 | xargs -0 --no-run-if-empty -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$BUILD_DIR"'/.apt\1!g'
 
 # post-installation logic for git
-# check is git is in the Aptfile and set GIT_EXEC_PATH
+# If git was installed by this buildpack set `GIT_EXEC_PATH` to work around:
+# https://github.com/heroku/heroku-buildpack-apt/issues/137
 if [[ -f "${BUILD_DIR}/.apt/usr/bin/git" ]]; then
   GIT_CORE_DIR="${BUILD_DIR}/.apt/usr/lib/git-core"
   if [[ -d "$GIT_CORE_DIR" ]]; then
