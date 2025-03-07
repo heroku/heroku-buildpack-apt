@@ -162,7 +162,7 @@ if [[ -f "${BUILD_DIR}/.apt/usr/bin/git" ]]; then
     # shellcheck disable=SC2016
     echo 'export GIT_EXEC_PATH="$HOME/.apt/usr/lib/git-core"' >> "$RUNTIME_PROFILE_SCRIPT"
     # export the env var to later buildpacks
-    echo "declare -x GIT_EXEC_PATH=$GIT_CORE_DIR" >> "$BUILDPACK_EXPORT_FILE"
+    echo "declare -x GIT_EXEC_PATH=\"$GIT_CORE_DIR\"" >> "$BUILDPACK_EXPORT_FILE"
   else
     topic "Git core directory $GIT_CORE_DIR is either missing or empty. Skipping GIT_EXEC_PATH setup."
   fi
