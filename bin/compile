@@ -161,8 +161,6 @@ if [[ -f "${BUILD_DIR}/.apt/usr/bin/git" ]]; then
     # set env var in runtime profile script
     # shellcheck disable=SC2016
     echo 'export GIT_EXEC_PATH="$HOME/.apt/usr/lib/git-core"' >> "$RUNTIME_PROFILE_SCRIPT"
-    # export the env var within the build
-    export GIT_EXEC_PATH=$GIT_CORE_DIR
     # export the env var to later buildpacks
     export | grep -E -e ' (GIT_EXEC_PATH)=' >> "$BUILDPACK_EXPORT_FILE"
   else
