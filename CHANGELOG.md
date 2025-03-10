@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2025-03-11
+
 - Configures `GIT_EXEC_PATH` if `git` is installed. ([#143](https://github.com/heroku/heroku-buildpack-apt/pull/143))
 
 ## 2024-06-24
