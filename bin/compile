@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/compile <build-dir> <cache-dir>
+# bin/compile <build-dir> <cache-dir> <env-dir>
 
 # fail fast
 set -eo pipefail
@@ -10,9 +10,9 @@ if [ "$BUILDPACK_DEBUG" = "true" ] ; then
 fi
 
 # parse and derive params
-BUILD_DIR="${1:-}"
-CACHE_DIR="${2:-}"
-LP_DIR="$( cd "$( dirname "$0" )"; cd ..; pwd )"
+BUILD_DIR=$1
+CACHE_DIR=$2
+BP_DIR=$(cd "$(dirname "$0")"; cd ..; pwd)
 
 function error() {
   echo " !     $*" >&2
@@ -126,7 +126,8 @@ done
 
 topic "Writing profile script"
 mkdir -p "$BUILD_DIR/.profile.d"
-cat <<EOF >"$BUILD_DIR/.profile.d/000_apt.sh"
+RUNTIME_PROFILE_SCRIPT="$BUILD_DIR/.profile.d/000_apt.sh"
+cat <<EOF >"$RUNTIME_PROFILE_SCRIPT"
 export PATH="\$HOME/.apt/usr/bin:\$HOME/.apt/usr/sbin:\$PATH"
 export LD_LIBRARY_PATH="\$HOME/.apt/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/lib:\$HOME/.apt/usr/lib:\$LD_LIBRARY_PATH"
 export LIBRARY_PATH="\$HOME/.apt/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$HOME/.apt/usr/lib/i386-linux-gnu:\$HOME/.apt/lib:\$HOME/.apt/usr/lib:\$LIBRARY_PATH"
@@ -145,7 +146,26 @@ export CPPPATH="$INCLUDE_PATH"
 export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 #give environment to later buildpacks
-export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)='  > "$LP_DIR/export"
+topic "Exporting environment"
+BUILDPACK_EXPORT_FILE="$BP_DIR/export"
+export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)=' > "$BUILDPACK_EXPORT_FILE"
 
 topic "Rewrite package-config files"
 find "$BUILD_DIR/.apt" -type f -ipath '*/pkgconfig/*.pc' -print0 | xargs -0 --no-run-if-empty -n 1 sed -i -e 's!^prefix=\(.*\)$!prefix='"$BUILD_DIR"'/.apt\1!g'
+
+# post-installation logic for git
+# If git was installed by this buildpack set `GIT_EXEC_PATH` to work around:
+# https://github.com/heroku/heroku-buildpack-apt/issues/137
+if [[ -f "${BUILD_DIR}/.apt/usr/bin/git" ]]; then
+  GIT_CORE_DIR="${BUILD_DIR}/.apt/usr/lib/git-core"
+  if [[ -d "$GIT_CORE_DIR" ]]; then
+    topic "Setting GIT_EXEC_PATH to $GIT_CORE_DIR"
+    # set env var in runtime profile script
+    # shellcheck disable=SC2016
+    echo 'export GIT_EXEC_PATH="$HOME/.apt/usr/lib/git-core"' >> "$RUNTIME_PROFILE_SCRIPT"
+    # export the env var to later buildpacks
+    echo "declare -x GIT_EXEC_PATH=\"$GIT_CORE_DIR\"" >> "$BUILDPACK_EXPORT_FILE"
+  else
+    topic "Git core directory $GIT_CORE_DIR is either missing or empty. Skipping GIT_EXEC_PATH setup."
+  fi
+fi

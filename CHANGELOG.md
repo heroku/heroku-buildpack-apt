@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2025-03-11
+
+- Configures `GIT_EXEC_PATH` if `git` is installed. ([#143](https://github.com/heroku/heroku-buildpack-apt/pull/143))
+
 ## 2024-06-24
 
 - The cache is now correctly invalidated if the stack version of an existing cache cannot be determined. ([#133](https://github.com/heroku/heroku-buildpack-apt/pull/133))
