@@ -99,6 +99,11 @@ APT_OPTIONS=("-o" "debug::nolocking=true" "-o" "dir::cache=$APT_CACHE_DIR" "-o" 
 # Override the use of /etc/apt/sources.list (sourcelist) and /etc/apt/sources.list.d/* (sourceparts).
 APT_OPTIONS+=("-o" "dir::etc::sourcelist=$APT_SOURCES" "-o" "dir::etc::sourceparts=$APT_SOURCEPARTS_DIR")
 
+# Check whether we want recommended packages or not (default is True):
+if [ -v "${APT_DONT_INSTALL_RECOMMENDS}" ]; then
+    APT_OPTIONS+=("-o" "APT::Install-Recommends" "False")
+fi
+
 topic "Updating APT package index"
 apt-get "${APT_OPTIONS[@]}" update 2>&1 | indent
 
