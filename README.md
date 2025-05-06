@@ -4,6 +4,12 @@ Add support for apt-based dependencies during both compile and runtime.
 
 Added ability to also specify custom repositories through **:repo:** in `Aptfile` (see example below).
 
+> [!Important]
+> This buildpack is compatible with Heroku's [Cedar generation platform](https://devcenter.heroku.com/articles/generations#cedar) only.
+> 
+> For equivalent functionality on Heroku's [Fir generation platform](https://devcenter.heroku.com/articles/generations#fir), 
+> then check out the `.deb` Packages CNB [here](https://github.com/heroku/buildpacks-deb-packages).
+
 ## Usage
 
 This buildpack is not meant to be used on its own, and instead should be in used in combination with Heroku's [multiple buildpack support](https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app).
