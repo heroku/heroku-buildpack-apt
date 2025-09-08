@@ -132,6 +132,7 @@ export INCLUDE_PATH="\$HOME/.apt/usr/include:\$HOME/.apt/usr/include/x86_64-linu
 export CPATH="\$INCLUDE_PATH"
 export CPPPATH="\$INCLUDE_PATH"
 export PKG_CONFIG_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/i386-linux-gnu/pkgconfig:\$HOME/.apt/usr/lib/pkgconfig:\$PKG_CONFIG_PATH"
+export GI_TYPELIB_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu/girepository-1.0:\$HOME/.apt/usr/lib/i386-linux-gnu/girepository-1.0:\$GI_TYPELIB_PATH"
 EOF
 
 export PATH="$BUILD_DIR/.apt/usr/bin:$PATH"
@@ -141,6 +142,7 @@ export INCLUDE_PATH="$BUILD_DIR/.apt/usr/include:$BUILD_DIR/.apt/usr/include/x86
 export CPATH="$INCLUDE_PATH"
 export CPPPATH="$INCLUDE_PATH"
 export PKG_CONFIG_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/i386-linux-gnu/pkgconfig:$BUILD_DIR/.apt/usr/lib/pkgconfig:$PKG_CONFIG_PATH"
+export GI_TYPELIB_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu/girepository-1.0:\$HOME/.apt/usr/lib/i386-linux-gnu/girepository-1.0:\$GI_TYPELIB_PATH"
 
 # borrowed from heroku-geo-buildpack
 
@@ -159,6 +161,7 @@ PROFILE_PATH="$BUILD_DIR/.profile.d/000_apt.sh"
 
 #give environment to later buildpacks
 export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH)='  > "$LP_DIR/export"
+export | grep -E -e ' (PATH|LD_LIBRARY_PATH|LIBRARY_PATH|INCLUDE_PATH|CPATH|CPPPATH|PKG_CONFIG_PATH|GI_TYPELIB_PATH)='  > "$LP_DIR/export"
 
 # Set environment variables for later buildpacks, so that the GDAL installation
 # can be found when pip installing GDAL, or by Django (eg during collectstatic).
