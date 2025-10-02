@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
 testCompilePackageNames() {
-  compile "package-names"
+  bp_dir=$(mktmpdir)
+  build_dir=$(mktmpdir)
+  cache_dir=$(mktmpdir)
+  compile "package-names" "${bp_dir}" "${build_dir}" "${cache_dir}"
+
   assertCaptured "Updating APT package index"
   assertCaptured "Fetching .debs for xmlsec1"
   assertCaptured "Fetching .debs for s3cmd wget"
@@ -14,30 +18,50 @@ testCompilePackageNames() {
   assertCaptured "Writing profile script"
   assertCaptured "Rewrite package-config files"
   assertCapturedSuccess
+
+  assertProfileContains 'export PATH="$HOME/.apt/usr/bin:$PATH"' "$build_dir"
+  assertProfileContains 'export LD_LIBRARY_PATH="$HOME/.apt/usr/lib/x86_64-linux-gnu:$HOME/.apt/usr/lib/i386-linux-gnu:$HOME/.apt/usr/lib:$LD_LIBRARY_PATH"' "$build_dir"
+  assertProfileContains 'export LIBRARY_PATH="$HOME/.apt/usr/lib/x86_64-linux-gnu:$HOME/.apt/usr/lib/i386-linux-gnu:$HOME/.apt/usr/lib:$LIBRARY_PATH"' "$build_dir"
+  assertProfileContains 'export INCLUDE_PATH="$HOME/.apt/usr/include:$HOME/.apt/usr/include/x86_64-linux-gnu:$INCLUDE_PATH"' "$build_dir"
+  assertProfileContains 'export CPATH="$INCLUDE_PATH"' "$build_dir"
+  assertProfileContains 'export CPPPATH="$INCLUDE_PATH"' "$build_dir"
+  assertProfileContains 'export PKG_CONFIG_PATH="$HOME/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$HOME/.apt/usr/lib/i386-linux-gnu/pkgconfig:$HOME/.apt/usr/lib/pkgconfig:$PKG_CONFIG_PATH"' "$build_dir"
+  assertProfileNotContains 'export GIT_EXEC_PATH="$HOME/.apt/usr/lib/git-core"' "$build_dir"
+
+  assertExportContains "declare -x PATH=\"$build_dir/.apt/usr/bin:" "$bp_dir"
+  assertExportContains "declare -x LD_LIBRARY_PATH=\"$build_dir/.apt/usr/lib/x86_64-linux-gnu:$build_dir/.apt/usr/lib/i386-linux-gnu:$build_dir/.apt/usr/lib:\"" "$bp_dir"
+  assertExportContains "declare -x LIBRARY_PATH=\"$build_dir/.apt/usr/lib/x86_64-linux-gnu:$build_dir/.apt/usr/lib/i386-linux-gnu:$build_dir/.apt/usr/lib:\"" "$bp_dir"
+  assertExportContains "declare -x INCLUDE_PATH=\"$build_dir/.apt/usr/include:$build_dir/.apt/usr/include/x86_64-linux-gnu:\"" "$bp_dir"
+  assertExportContains "declare -x CPATH=\"$build_dir/.apt/usr/include:$build_dir/.apt/usr/include/x86_64-linux-gnu:\"" "$bp_dir"
+  assertExportContains "declare -x CPPPATH=\"$build_dir/.apt/usr/include:$build_dir/.apt/usr/include/x86_64-linux-gnu:\"" "$bp_dir"
+  assertExportContains "declare -x PKG_CONFIG_PATH=\"$build_dir/.apt/usr/lib/x86_64-linux-gnu/pkgconfig:$build_dir/.apt/usr/lib/i386-linux-gnu/pkgconfig:$build_dir/.apt/usr/lib/pkgconfig:\"" "$bp_dir"
+  assertExportNotContains "declare -x GIT_EXEC_PATH=\"$build_dir/.apt/usr/lib/git-core\"" "$bp_dir"
 }
 
 testCacheInvalidation() {
+  bp_dir=$(mktmpdir)
+  build_dir=$(mktmpdir)
   cache_dir=$(mktmpdir)
 
   # Cold cache
-  compile "package-names" "${cache_dir}"
+  compile "package-names" "${bp_dir}" "${build_dir}" "${cache_dir}"
   assertCaptured "Detected Aptfile or Stack changes, flushing cache"
   assertCapturedSuccess
 
   # Warm cache
-  compile "package-names" "${cache_dir}"
+  compile "package-names" "${bp_dir}" "${build_dir}" "${cache_dir}"
   assertCaptured "Reusing cache"
   assertCapturedSuccess
 
   # Cache invalidated on stack change
   echo 'some-old-stack' > "${cache_dir}/.apt/STACK"
-  compile "package-names" "${cache_dir}"
+  compile "package-names" "${bp_dir}" "${build_dir}" "${cache_dir}"
   assertCaptured "Detected Aptfile or Stack changes, flushing cache"
   assertCapturedSuccess
 
   # Cache invalidated if stack version file missing (eg cache from old buildpack version)
   rm "${cache_dir}/.apt/STACK"
-  compile "package-names" "${cache_dir}"
+  compile "package-names" "${bp_dir}" "${build_dir}" "${cache_dir}"
   assertCaptured "Detected Aptfile or Stack changes, flushing cache"
   assertCapturedSuccess
 }
@@ -52,7 +76,6 @@ testReportPackageNames() {
 
 testCompileCustomPackageUrl() {
   declare -A download_urls=(
-    [heroku-20]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb"
     [heroku-22]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
     # no noble package for wkhtmltopdf yet, so using jammy package
     [heroku-24]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
@@ -68,7 +91,6 @@ testCompileCustomPackageUrl() {
 
 testReportCustomPackageUrl() {
   declare -A download_urls=(
-    [heroku-20]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.focal_amd64.deb"
     [heroku-22]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
     # no noble package for wkhtmltopdf yet, so using jammy package
     [heroku-24]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
@@ -82,7 +104,6 @@ testReportCustomPackageUrl() {
 
 testCompileCustomRepository() {
   declare -A ubuntu_release_names=(
-    [heroku-20]="focal"
     [heroku-22]="jammy"
     [heroku-24]="noble"
   )
@@ -99,7 +120,6 @@ testCompileCustomRepository() {
 
 testReportCustomRepository() {
   declare -A ubuntu_release_names=(
-      [heroku-20]="focal"
       [heroku-22]="jammy"
       [heroku-24]="noble"
     )
@@ -155,6 +175,19 @@ testReportCustomRepositoryNoPackages() {
   assertCapturedSuccess
 }
 
+testGitEnvConfig() {
+  bp_dir=$(mktmpdir)
+  build_dir=$(mktmpdir)
+  compile "git" "${bp_dir}" "${build_dir}"
+
+  assertCaptured "Setting GIT_EXEC_PATH"
+  assertCapturedSuccess
+
+  assertProfileContains 'export GIT_EXEC_PATH="$HOME/.apt/usr/lib/git-core"' "$build_dir"
+
+  assertExportContains "declare -x GIT_EXEC_PATH=\"$build_dir/.apt/usr/lib/git-core\"" "$bp_dir"
+}
+
 pushd "$(dirname 0)" >/dev/null || exit 1
 popd >/dev/null || exit 1
 
@@ -162,22 +195,26 @@ source "$(pwd)"/test/utils
 
 compile() {
   default_process_types_cleanup
-  bp_dir=$(mktmpdir)
-  compile_dir=$(mktmpdir)
+  fixture="$1"
+  bp_dir=${2:-$(mktmpdir)}
+  build_dir=${3:-$(mktmpdir)}
+  cache_dir=${4:-$(mktmpdir)}
+  env_dir=$(mktmpdir)
   cp -a "$(pwd)"/* "${bp_dir}"
-  cp -a "${bp_dir}"/test/fixtures/"$1"/. "${compile_dir}"
-  capture "${bp_dir}"/bin/compile "${compile_dir}" "${2:-$(mktmpdir)}" "$3"
+  cp -a "${bp_dir}"/test/fixtures/"$fixture"/. "${build_dir}"
+  capture "${bp_dir}"/bin/compile "${build_dir}" "${cache_dir}" "${env_dir}"
 }
 
 report() {
   default_process_types_cleanup
-  compile_dir=${1:-$(mktmpdir)}
-  cache_dir=${2:-$(mktmpdir)}
-  env_dir=${3:-$(mktmpdir)}
-  bp_dir=$(mktmpdir)
+  fixture="$1"
+  bp_dir=${2:-$(mktmpdir)}
+  build_dir=${3:-$(mktmpdir)}
+  cache_dir=${4:-$(mktmpdir)}
+  env_dir=$(mktmpdir)
   cp -a "$(pwd)"/* "${bp_dir}"
-  cp -a "${bp_dir}"/test/fixtures/"$1"/. "${compile_dir}"
-  capture "${bp_dir}"/bin/report "${compile_dir}" "${cache_dir}" "${env_dir}"
+  cp -a "${bp_dir}"/test/fixtures/"$fixture"/. "${build_dir}"
+  capture "${bp_dir}"/bin/report "${build_dir}" "${cache_dir}" "${env_dir}"
 }
 
 mktmpdir() {
@@ -192,6 +229,30 @@ default_process_types_cleanup() {
   if [ -f "$file" ]; then
     rm "$file"
   fi
+}
+
+assertProfileContains() {
+  text="$1"
+  build_dir="$2"
+  assertFileContains "$text" "$build_dir/.profile.d/000_apt.sh"
+}
+
+assertProfileNotContains() {
+  text="$1"
+  build_dir="$2"
+  assertFileNotContains "$text" "$build_dir/.profile.d/000_apt.sh"
+}
+
+assertExportContains() {
+  text="$1"
+  bp_dir="$2"
+  assertFileContains "$text" "$bp_dir/export"
+}
+
+assertExportNotContains() {
+  text="$1"
+  bp_dir="$2"
+  assertFileNotContains "$text" "$bp_dir/export"
 }
 
 source "$(pwd)"/test/shunit2
