@@ -79,6 +79,8 @@ testCompileCustomPackageUrl() {
     [heroku-22]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
     # no noble package for wkhtmltopdf yet, so using jammy package
     [heroku-24]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+    # no resolute package for wkhtmltopdf yet, so using jammy package
+    [heroku-26]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
   )
   compile "custom-package-url-$STACK"
   assertCaptured "Updating APT package index"
@@ -94,6 +96,8 @@ testReportCustomPackageUrl() {
     [heroku-22]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
     # no noble package for wkhtmltopdf yet, so using jammy package
     [heroku-24]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+    # no resolute package for wkhtmltopdf yet, so using jammy package
+    [heroku-26]="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
   )
   report "custom-package-url-$STACK"
   assertNotCaptured "^packages"
@@ -106,13 +110,15 @@ testCompileCustomRepository() {
   declare -A ubuntu_release_names=(
     [heroku-22]="jammy"
     [heroku-24]="noble"
+    [heroku-26]="resolute"
   )
+  arch="$(dpkg --print-architecture)"
   compile "custom-repository-$STACK"
   assertCaptured "Adding custom repositories"
   assertCaptured "Updating APT package index"
-  assertCaptured "http://us.archive.ubuntu.com/ubuntu ${ubuntu_release_names[$STACK]}/multiverse amd64 Packages"
-  assertCaptured "Fetching .debs for fasttracker2"
-  assertCaptured "Installing fasttracker2"
+  assertCaptured "http://us.archive.ubuntu.com/ubuntu ${ubuntu_release_names[$STACK]}/multiverse ${arch} Packages"
+  assertCaptured "Fetching .debs for translate-shell"
+  assertCaptured "Installing translate-shell"
   assertCaptured "Writing profile script"
   assertCaptured "Rewrite package-config files"
   assertCapturedSuccess
@@ -122,9 +128,10 @@ testReportCustomRepository() {
   declare -A ubuntu_release_names=(
       [heroku-22]="jammy"
       [heroku-24]="noble"
+      [heroku-26]="resolute"
     )
   report "custom-repository-$STACK"
-  assertCaptured "packages: \"fasttracker2\""
+  assertCaptured "packages: \"translate-shell\""
   assertNotCaptured "custom_packages"
   assertCaptured "custom_repositories: \"deb http://us.archive.ubuntu.com/ubuntu/ ${ubuntu_release_names[$STACK]} multiverse\""
   assertCapturedSuccess
