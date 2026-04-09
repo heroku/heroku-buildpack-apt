@@ -1,7 +1,12 @@
-test: heroku-24-build heroku-22-build
+test: heroku-26-build heroku-24-build heroku-22-build
 
 shellcheck:
 	@shellcheck -x bin/compile bin/detect bin/release bin/report
+
+heroku-26-build:
+	@echo "Running tests in docker (heroku-26-build)..."
+	@docker run --user root -v $(shell pwd):/buildpack:ro --rm -it -e "STACK=heroku-26" heroku/heroku:26-build bash -c 'cp -r /buildpack /buildpack_test; cd /buildpack_test/; test/run;'
+	@echo ""
 
 heroku-24-build:
 	@echo "Running tests in docker (heroku-24-build)..."
